@@ -1,0 +1,35 @@
+services:
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-checkpoint}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-checkpoint}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://checkpoint:changeme@database:5432/checkpoint}
+      NODE_ENV: ${NODE_ENV:-development}
+    depends_on:
+      - database
+
+  transcription-worker:
+    build: ./transcription-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://checkpoint:changeme@database:5432/checkpoint}
+    depends_on:
+      - database
+
+volumes:
+  postgres_data:
