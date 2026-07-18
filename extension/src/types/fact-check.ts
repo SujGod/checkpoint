@@ -1,15 +1,17 @@
 export type FactCheckVerdict = "TRUE" | "FALSE" | "INCONCLUSIVE";
+export type FactCheckStatus = "PENDING" | "CHECKING" | "COMPLETE" | "FAILED";
 
-export interface FactCheck {
+export interface VideoFactCheckManifest {
+  videoId: string;
+  factChecks: FactCheck[];
+}
+
+export type FactCheck = {
   id: string;
+  claim: string;
   startSeconds: number;
   endSeconds: number;
-  claim: string;
-  verdict: FactCheckVerdict;
-  explanation: string;
-  confidence: number;
-  sources: FactCheckSource[];
-}
+};
 
 export interface FactCheckRequest {
   claim: string;

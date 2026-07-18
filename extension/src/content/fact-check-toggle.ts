@@ -1,7 +1,7 @@
 import { isFactCheckEnabled, setFactCheckEnabled } from "../storage/settings";
 import claimSiftIcon from "../assets/claimSiftLogo.png";
 
-const TOGGLE_ID = "check-point-toggle";
+const TOGGLE_ID = "claimsift-toggle";
 
 interface ToggleCallbacks {
   onEnable: () => void;
@@ -25,7 +25,7 @@ const createToggleButton = (): HTMLButtonElement => {
 
   button.id = TOGGLE_ID;
   button.type = "button";
-  button.className = "ytp-button check-point-toggle";
+  button.className = "ytp-button claimsift-toggle";
 
   button.setAttribute("aria-label", "Toggle ClaimSift fact checks");
 
@@ -33,7 +33,7 @@ const createToggleButton = (): HTMLButtonElement => {
 
   icon.src = chrome.runtime.getURL(claimSiftIcon);
   icon.alt = "";
-  icon.className = "check-point-toggle-icon";
+  icon.className = "claimsift-toggle-icon";
   icon.setAttribute("aria-hidden", "true");
 
   button.appendChild(icon);

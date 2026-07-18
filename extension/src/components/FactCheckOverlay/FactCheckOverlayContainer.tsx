@@ -32,17 +32,37 @@ const FactCheckOverlayContainer = ({
 
     void checkClaim({
       claim: normalizedClaim,
-    });
+    })
+      .unwrap()
+      .then((response) => {
+        console.log("[ClaimSift] Fact-check response:", response);
+      })
+      .catch((mutationError: unknown) => {
+        console.error("[ClaimSift] Fact-check mutation failed:", mutationError);
+      });
   }, [claim, checkClaim]);
 
   if (isLoading) {
-    console.log("ClaimSift request loading");
-    return null;
+    return (
+      <aside className="claimsift-overlay" aria-label="Fact-check information">
+        <div className="fact-check-overlay">
+          <div className="fact-check-overlay__claim"></div>
+          <div className="fact-check-overlay__status">Checking…</div>
+        </div>
+      </aside>
+    );
   }
 
   if (isError) {
     console.error("ClaimSift request failed:", error);
-    return null;
+    return (
+      <aside className="claimsift-overlay" aria-label="Fact-check information">
+        <div className="fact-check-overlay">
+          <div className="fact-check-overlay__claim"></div>
+          <div className="fact-check-overlay__status">Unable to Check</div>
+        </div>
+      </aside>
+    );
   }
 
   if (!data) {

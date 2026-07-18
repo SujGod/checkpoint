@@ -1,6 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 import type { FactCheckRequest, FactCheckResponse } from "../types/fact-check";
+import type {
+  ExtractClaimsResponse,
+  ExtractClaimsRequest,
+} from "../types/transcript";
 
 export const claimsiftApi = createApi({
   reducerPath: "claimsiftApi",
@@ -17,7 +21,17 @@ export const claimsiftApi = createApi({
         body: request,
       }),
     }),
+    extractClaims: builder.mutation<
+      ExtractClaimsResponse,
+      ExtractClaimsRequest
+    >({
+      query: (request) => ({
+        url: "/claims/extract",
+        method: "POST",
+        body: request,
+      }),
+    }),
   }),
 });
 
-export const { useCheckClaimMutation } = claimsiftApi;
+export const { useCheckClaimMutation, useExtractClaimsMutation } = claimsiftApi;
