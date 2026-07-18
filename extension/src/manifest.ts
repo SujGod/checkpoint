@@ -8,7 +8,7 @@ const manifest: ManifestV3Export = {
 
   permissions: ["storage"],
 
-  host_permissions: ["https://www.youtube.com/*"],
+  host_permissions: ["https://www.youtube.com/*", "http://localhost:8080/*"],
 
   content_scripts: [
     {
