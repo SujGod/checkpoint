@@ -1,4 +1,4 @@
-package com.checkpoint.backend.dto;
+package com.claimsift.backend.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

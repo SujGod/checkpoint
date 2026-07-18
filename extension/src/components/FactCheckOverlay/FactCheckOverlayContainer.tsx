@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { useCheckClaimMutation } from "../../api/checkpointApi";
+import { useCheckClaimMutation } from "../../api/claimsiftApi";
 import FactCheckOverlay from "./FactCheckOverlay";
 
 interface FactCheckOverlayContainerProps {
@@ -28,7 +28,7 @@ const FactCheckOverlayContainer = ({
 
     submittedClaimRef.current = normalizedClaim;
 
-    console.count("CheckPoint POST request");
+    console.count("ClaimSift POST request");
 
     void checkClaim({
       claim: normalizedClaim,
@@ -36,12 +36,12 @@ const FactCheckOverlayContainer = ({
   }, [claim, checkClaim]);
 
   if (isLoading) {
-    console.log("CheckPoint request loading");
+    console.log("ClaimSift request loading");
     return null;
   }
 
   if (isError) {
-    console.error("CheckPoint request failed:", error);
+    console.error("ClaimSift request failed:", error);
     return null;
   }
 

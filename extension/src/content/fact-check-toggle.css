@@ -1,0 +1,39 @@
+#check-point-toggle {
+  box-sizing: border-box;
+  width: 54px;
+  height: 100%;
+  padding: 6px;
+
+  border: 0;
+  background: transparent;
+
+  cursor: pointer;
+}
+
+.check-point-toggle-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  pointer-events: none;
+
+  transition:
+    filter 150ms ease,
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+
+#check-point-toggle[data-enabled="false"] .check-point-toggle-icon {
+  filter: grayscale(1) brightness(0.7);
+  opacity: 0.6;
+}
+
+#check-point-toggle[data-enabled="true"] .check-point-toggle-icon {
+  filter: drop-shadow(0 0 4px rgba(0, 220, 170, 0.65));
+  opacity: 1;
+}
+
+#check-point-toggle:hover .check-point-toggle-icon {
+  transform: scale(1.08);
+}

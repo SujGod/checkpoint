@@ -2,8 +2,8 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 import type { FactCheckRequest, FactCheckResponse } from "../types/fact-check";
 
-export const checkpointApi = createApi({
-  reducerPath: "checkpointApi",
+export const claimsiftApi = createApi({
+  reducerPath: "claimsiftApi",
 
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:8080/api/v1",
@@ -20,4 +20,4 @@ export const checkpointApi = createApi({
   }),
 });
 
-export const { useCheckClaimMutation } = checkpointApi;
+export const { useCheckClaimMutation } = claimsiftApi;

@@ -1,4 +1,4 @@
-package com.checkpoint.backend.controller;
+package com.claimsift.backend.controller;
 
 import java.util.List;
 
@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.checkpoint.backend.dto.FactCheckRequest;
-import com.checkpoint.backend.dto.FactCheckResponse;
-import com.checkpoint.backend.model.Verdict;
+import com.claimsift.backend.dto.FactCheckRequest;
+import com.claimsift.backend.dto.FactCheckResponse;
+import com.claimsift.backend.model.Verdict;
 
 import jakarta.validation.Valid;
 

@@ -1,15 +1,23 @@
 import { createRoot, type Root } from "react-dom/client";
+import { Provider } from "react-redux";
+
 import type { FactCheck } from "../types/fact-check";
 import { videoManifest } from "../video-manifest";
-import { Provider } from "react-redux";
 import { store } from "../redux/store";
 import FactCheckOverlayContainer from "../components/FactCheckOverlay/FactCheckOverlayContainer";
+
+import { isFactCheckEnabled } from "../storage/settings";
+import { insertFactCheckToggle } from "./fact-check-toggle";
+
+import "./fact-check-toggle.css";
 
 let root: Root | null = null;
 let overlayContainer: HTMLDivElement | null = null;
 let activeFactCheck: FactCheck | null = null;
 let attachedVideo: HTMLVideoElement | null = null;
 let videoDiscoveryObserver: MutationObserver | null = null;
+
+let factCheckingEnabled = false;
 
 const getVideo = (): HTMLVideoElement | null => {
   return document.querySelector<HTMLVideoElement>("video");
@@ -45,7 +53,21 @@ const createOverlayContainer = (): HTMLDivElement => {
   return container;
 };
 
+const removeClaimSiftOverlay = (): void => {
+  activeFactCheck = null;
+
+  root?.unmount();
+  overlayContainer?.remove();
+
+  root = null;
+  overlayContainer = null;
+};
+
 const renderFactCheck = (factCheck: FactCheck | null): void => {
+  if (!factCheckingEnabled) {
+    return;
+  }
+
   if (!factCheck) {
     root?.render(null);
     return;
@@ -59,7 +81,7 @@ const renderFactCheck = (factCheck: FactCheck | null): void => {
     return;
   }
 
-  console.log("Rendering CheckPoint claim:", factCheck.id, factCheck.claim);
+  console.log("Rendering ClaimSift claim:", factCheck.id, factCheck.claim);
 
   root.render(
     <Provider store={store}>
@@ -79,14 +101,15 @@ const findActiveFactCheck = (currentTime: number): FactCheck | null => {
 };
 
 const handleTimeUpdate = (): void => {
-  if (!attachedVideo) {
+  if (!factCheckingEnabled || !attachedVideo) {
     return;
   }
 
   const nextFactCheck = findActiveFactCheck(attachedVideo.currentTime);
 
   if (nextFactCheck?.id !== activeFactCheck?.id) {
-    console.log("CheckPoint active fact check changed:", nextFactCheck);
+    console.log("ClaimSift active fact check changed:", nextFactCheck);
+
     activeFactCheck = nextFactCheck;
     renderFactCheck(activeFactCheck);
   }
@@ -103,30 +126,76 @@ const attachToVideo = (video: HTMLVideoElement): void => {
   }
 
   attachedVideo = video;
-  attachedVideo.addEventListener("timeupdate", handleTimeUpdate);
 
-  handleTimeUpdate();
+  if (factCheckingEnabled) {
+    attachedVideo.addEventListener("timeupdate", handleTimeUpdate);
+
+    handleTimeUpdate();
+  }
 };
 
-const initialize = (): void => {
+const startFactChecking = (): void => {
+  if (factCheckingEnabled) {
+    return;
+  }
+
+  factCheckingEnabled = true;
+
+  if (attachedVideo) {
+    attachedVideo.addEventListener("timeupdate", handleTimeUpdate);
+
+    handleTimeUpdate();
+  }
+};
+
+const stopFactChecking = (): void => {
+  if (!factCheckingEnabled) {
+    return;
+  }
+
+  factCheckingEnabled = false;
+
+  attachedVideo?.removeEventListener("timeupdate", handleTimeUpdate);
+
+  removeClaimSiftOverlay();
+};
+
+const initializeToggle = async (): Promise<void> => {
+  await insertFactCheckToggle({
+    onEnable: startFactChecking,
+    onDisable: stopFactChecking,
+  });
+};
+
+const initialize = async (): Promise<void> => {
   videoDiscoveryObserver?.disconnect();
   videoDiscoveryObserver = null;
+
+  factCheckingEnabled = await isFactCheckEnabled();
+
+  await initializeToggle();
 
   const video = getVideo();
 
   if (video) {
-    createOverlayContainer();
     attachToVideo(video);
+
+    if (factCheckingEnabled) {
+      handleTimeUpdate();
+    }
+
     return;
   }
 
-  videoDiscoveryObserver = new MutationObserver(() => {
+  videoDiscoveryObserver = new MutationObserver(async () => {
+    await initializeToggle();
+
     const discoveredVideo = getVideo();
 
     if (discoveredVideo) {
       videoDiscoveryObserver?.disconnect();
       videoDiscoveryObserver = null;
-      createOverlayContainer();
+
       attachToVideo(discoveredVideo);
     }
   });
@@ -137,23 +206,18 @@ const initialize = (): void => {
   });
 };
 
-document.addEventListener("yt-navigate-finish", () => {
-  if (attachedVideo) {
-    attachedVideo.removeEventListener("timeupdate", handleTimeUpdate);
-  }
+document.addEventListener("yt-navigate-finish", async () => {
+  attachedVideo?.removeEventListener("timeupdate", handleTimeUpdate);
 
   videoDiscoveryObserver?.disconnect();
   videoDiscoveryObserver = null;
 
-  root?.unmount();
-  overlayContainer?.remove();
+  removeClaimSiftOverlay();
 
-  root = null;
-  overlayContainer = null;
   activeFactCheck = null;
   attachedVideo = null;
 
-  initialize();
+  await initialize();
 });
 
-initialize();
+void initialize();

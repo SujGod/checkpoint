@@ -1,8 +1,8 @@
-package com.checkpoint.backend.dto;
+package com.claimsift.backend.dto;
 
 import java.util.List;
 
-import com.checkpoint.backend.model.Verdict;
+import com.claimsift.backend.model.Verdict;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
