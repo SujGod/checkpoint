@@ -1,0 +1,14 @@
+package com.checkpoint.backend.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class SourceResponse {
+    private String title;
+    private String url;
+    private String publisher;
+}
