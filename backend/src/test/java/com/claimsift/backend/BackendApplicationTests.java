@@ -1,4 +1,4 @@
-package com.checkpoint.backend;
+package com.claimsift.backend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

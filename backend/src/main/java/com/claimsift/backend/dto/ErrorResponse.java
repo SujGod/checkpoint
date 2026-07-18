@@ -1,4 +1,4 @@
-package com.checkpoint.backend.dto;
+package com.claimsift.backend.dto;
 
 import java.time.Instant;
 import lombok.AllArgsConstructor;

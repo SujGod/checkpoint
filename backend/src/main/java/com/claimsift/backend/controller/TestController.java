@@ -1,4 +1,4 @@
-package com.checkpoint.backend.controller;
+package com.claimsift.backend.controller;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +10,6 @@ public class TestController {
 
     @GetMapping("/health")
     public String health() {
-        return "CheckPoint backend is running";
+        return "ClaimSift backend is running";
     }
 }

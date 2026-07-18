@@ -1,4 +1,4 @@
-package com.checkpoint.backend.model;
+package com.claimsift.backend.model;
 
 public enum Verdict {
     TRUE,

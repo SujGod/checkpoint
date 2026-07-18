@@ -1,4 +1,4 @@
-package com.checkpoint.backend.exception;
+package com.claimsift.backend.exception;
 
 import java.time.Instant;
 import java.util.Map;
@@ -9,7 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.checkpoint.backend.dto.ErrorResponse;
+import com.claimsift.backend.dto.ErrorResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {

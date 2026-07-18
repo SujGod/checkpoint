@@ -1,13 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { checkpointApi } from "../api/checkpointApi";
+import { claimsiftApi } from "../api/claimsiftApi";
 
 export const store = configureStore({
   reducer: {
-    [checkpointApi.reducerPath]: checkpointApi.reducer,
+    [claimsiftApi.reducerPath]: claimsiftApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(checkpointApi.middleware),
+    getDefaultMiddleware().concat(claimsiftApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

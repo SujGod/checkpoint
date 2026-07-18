@@ -1,13 +1,13 @@
-package com.checkpoint.backend;
+package com.claimsift.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class CheckpointBackendApplication {
+public class ClaimSiftBackendApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(CheckpointBackendApplication.class, args);
+		SpringApplication.run(ClaimSiftBackendApplication.class, args);
 	}
 
 }
