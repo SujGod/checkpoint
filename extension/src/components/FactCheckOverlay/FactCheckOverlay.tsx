@@ -24,25 +24,25 @@ const FactCheckOverlay = ({
   onViewSources,
 }: FactCheckOverlayProps) => {
   return (
-    <aside className="check-point-overlay" aria-label="Fact-check information">
-      <div className="check-point-content">
+    <aside className="claimsift-overlay" aria-label="Fact-check information">
+      <div className="claimsift-content">
         <div
-          className={`check-point-verdict check-point-verdict--${verdict.toLowerCase()}`}
+          className={`claimsift-verdict claimsift-verdict--${verdict.toLowerCase()}`}
         >
           {verdict}
           <img
             src={verdictIcons[verdict]}
             alt=""
-            className="check-point-verdict-icon"
+            className="claimsift-verdict-icon"
             aria-hidden="true"
           />
         </div>
-        <div className="check-point-claim">“{claim}”</div>
-        <div className="check-point-explanation">{explanation}</div>
+        <div className="claimsift-claim">“{claim}”</div>
+        <div className="claimsift-explanation">{explanation}</div>
         {onViewSources && (
           <button
             type="button"
-            className="check-point-source-button"
+            className="claimsift-source-button"
             onClick={onViewSources}
           >
             View sources
