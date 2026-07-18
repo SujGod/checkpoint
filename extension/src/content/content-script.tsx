@@ -1,7 +1,9 @@
 import { createRoot, type Root } from "react-dom/client";
-import FactCheckOverlay from "../components/FactCheckOverlay/FactCheckOverlay";
 import type { FactCheck } from "../types/fact-check";
 import { videoManifest } from "../video-manifest";
+import { Provider } from "react-redux";
+import { store } from "../redux/store";
+import FactCheckOverlayContainer from "../components/FactCheckOverlay/FactCheckOverlayContainer";
 
 let root: Root | null = null;
 let overlayContainer: HTMLDivElement | null = null;
@@ -44,6 +46,11 @@ const createOverlayContainer = (): HTMLDivElement => {
 };
 
 const renderFactCheck = (factCheck: FactCheck | null): void => {
+  if (!factCheck) {
+    root?.render(null);
+    return;
+  }
+
   if (!root || !overlayContainer) {
     createOverlayContainer();
   }
@@ -52,17 +59,12 @@ const renderFactCheck = (factCheck: FactCheck | null): void => {
     return;
   }
 
-  if (!factCheck) {
-    root.render(null);
-    return;
-  }
+  console.log("Rendering CheckPoint claim:", factCheck.id, factCheck.claim);
 
   root.render(
-    <FactCheckOverlay
-      claim={factCheck.claim}
-      verdict={factCheck.verdict}
-      explanation={factCheck.explanation}
-    />,
+    <Provider store={store}>
+      <FactCheckOverlayContainer key={factCheck.id} claim={factCheck.claim} />
+    </Provider>,
   );
 };
 
@@ -84,6 +86,7 @@ const handleTimeUpdate = (): void => {
   const nextFactCheck = findActiveFactCheck(attachedVideo.currentTime);
 
   if (nextFactCheck?.id !== activeFactCheck?.id) {
+    console.log("CheckPoint active fact check changed:", nextFactCheck);
     activeFactCheck = nextFactCheck;
     renderFactCheck(activeFactCheck);
   }
