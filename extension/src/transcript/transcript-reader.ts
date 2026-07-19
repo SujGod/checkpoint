@@ -19,8 +19,31 @@ const wait = (milliseconds: number): Promise<void> =>
     window.setTimeout(resolve, milliseconds);
   });
 
-const getTranscriptPanel = (): HTMLElement | null =>
-  document.querySelector<HTMLElement>(TRANSCRIPT_PANEL_SELECTOR);
+const getTranscriptPanel = (): HTMLElement | null => {
+  const panels = Array.from(
+    document.querySelectorAll<HTMLElement>(TRANSCRIPT_PANEL_SELECTOR),
+  );
+
+  return (
+    panels.find((panel) => {
+      const targetId = panel.getAttribute("target-id") ?? "";
+
+      const visibility = panel.getAttribute("visibility");
+
+      const isTranscriptPanel =
+        targetId === "engagement-panel-searchable-transcript" ||
+        targetId === "PAmodern_transcript_view" ||
+        panel.querySelector("ytd-transcript-segment-renderer") !== null ||
+        panel.innerText.toLowerCase().includes("transcript");
+
+      const isExpanded =
+        visibility === "ENGAGEMENT_PANEL_VISIBILITY_EXPANDED" ||
+        isElementVisible(panel);
+
+      return isTranscriptPanel && isExpanded;
+    }) ?? null
+  );
+};
 
 const isElementVisible = (element: HTMLElement): boolean => {
   const styles = window.getComputedStyle(element);
@@ -43,8 +66,12 @@ const isTranscriptPanelOpen = (): boolean => {
 
   const visibility = panel.getAttribute("visibility");
 
+  const hasSegments =
+    panel.querySelector("ytd-transcript-segment-renderer") !== null;
+
   return (
     visibility === "ENGAGEMENT_PANEL_VISIBILITY_EXPANDED" ||
+    hasSegments ||
     isElementVisible(panel)
   );
 };

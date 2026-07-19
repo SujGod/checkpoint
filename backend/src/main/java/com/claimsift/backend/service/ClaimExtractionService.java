@@ -1,5 +1,6 @@
 package com.claimsift.backend.service;
 
+import com.claimsift.backend.constants.Constants;
 import com.claimsift.backend.dto.ClaimExtractionRequest;
 import com.claimsift.backend.dto.ClaimExtractionResponse;
 import com.claimsift.backend.dto.ExtractedClaimResponse;
@@ -24,65 +25,6 @@ public class ClaimExtractionService {
 
     private static final int MINIMUM_WORD_COUNT = 4;
     private static final int MAXIMUM_WORD_COUNT = 45;
-
-    private static final Set<String> OPINION_PREFIXES = Set.of(
-            "i think",
-            "i believe",
-            "i feel",
-            "in my opinion",
-            "personally",
-            "it seems",
-            "i guess",
-            "maybe",
-            "perhaps"
-    );
-
-    private static final Set<String> QUESTION_PREFIXES = Set.of(
-            "who",
-            "what",
-            "when",
-            "where",
-            "why",
-            "how",
-            "can",
-            "could",
-            "would",
-            "should",
-            "is",
-            "are",
-            "do",
-            "does",
-            "did"
-    );
-
-    private static final Set<String> FACTUAL_SIGNAL_WORDS = Set.of(
-            "is",
-            "are",
-            "was",
-            "were",
-            "has",
-            "have",
-            "had",
-            "causes",
-            "caused",
-            "contains",
-            "included",
-            "includes",
-            "increased",
-            "decreased",
-            "became",
-            "founded",
-            "created",
-            "invented",
-            "discovered",
-            "located",
-            "born",
-            "died",
-            "won",
-            "lost",
-            "released",
-            "announced"
-    );
 
     public ClaimExtractionResponse extractClaims(ClaimExtractionRequest request) {
 
@@ -145,7 +87,7 @@ public class ClaimExtractionService {
 
         if (startsWithAny(
                 lowercase,
-                OPINION_PREFIXES
+                Constants.OPINION_PREFIXES
         )) {
             return false;
         }
@@ -170,7 +112,7 @@ public class ClaimExtractionService {
         String firstWord = sentence
                 .split("\\s+", 2)[0];
 
-        return QUESTION_PREFIXES.contains(firstWord)
+        return Constants.QUESTION_PREFIXES.contains(firstWord)
                 && sentence.endsWith("?");
     }
 
@@ -187,7 +129,7 @@ public class ClaimExtractionService {
                 sentence.split("\\W+");
 
         for (String word : words) {
-            if (FACTUAL_SIGNAL_WORDS.contains(word)) {
+            if (Constants.FACTUAL_SIGNAL_WORDS.contains(word)) {
                 return true;
             }
         }

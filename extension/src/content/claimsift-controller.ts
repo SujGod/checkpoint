@@ -4,7 +4,10 @@ import {
   renderClaimSiftOverlay,
 } from "./overlay-controller";
 import { processVideoOnce } from "../transcript/transcript-processor";
-import { waitForYouTubeVideo, getCurrentYouTubeVideoId } from "./youtube-video-controller";
+import {
+  waitForYouTubeVideo,
+  getCurrentYouTubeVideoId,
+} from "./youtube-video-controller";
 
 let enabled = false;
 let manifest: FactCheck[] = [];
