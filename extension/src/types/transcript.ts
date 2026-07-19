@@ -31,3 +31,8 @@ export type ExtractClaimsResponse = {
   chunkId: string;
   claims: ExtractedClaim[];
 };
+
+export type ProcessVideoRequest = {
+  videoId: string;
+  segments: TranscriptSegment[];
+};

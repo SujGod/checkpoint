@@ -1,18 +1,13 @@
+import {
+  EXACT_TIMESTAMP_PATTERN,
+  TIMESTAMP_PATTERN_SOURCE,
+  TRANSCRIPT_PANEL_SELECTOR,
+} from "../constants/transcript-constants";
 import type { TranscriptSegment } from "../types/transcript";
-import { parseTimestamp } from "../utils/transcript.utils";
-
-const TRANSCRIPT_PANEL_SELECTORS = [
-  'ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]',
-  'ytd-engagement-panel-section-list-renderer[target-id="PAmodern_transcript_view"]',
-  'ytd-engagement-panel-section-list-renderer[visibility="ENGAGEMENT_PANEL_VISIBILITY_EXPANDED"]',
-];
-
-const TRANSCRIPT_PANEL_SELECTOR = TRANSCRIPT_PANEL_SELECTORS.join(",");
-
-const EXACT_TIMESTAMP_PATTERN = /^(?:\d{1,2}:)?\d{1,2}:\d{2}$/;
-
-const DURATION_LABEL_PATTERN =
-  /^\d+\s+(?:second|seconds|minute|minutes|hour|hours)$/i;
+import {
+  parseTimestamp,
+  removeDurationPrefix,
+} from "../utils/transcript.utils";
 
 const wait = (milliseconds: number): Promise<void> =>
   new Promise((resolve) => {
@@ -58,22 +53,7 @@ const isElementVisible = (element: HTMLElement): boolean => {
 };
 
 const isTranscriptPanelOpen = (): boolean => {
-  const panel = getTranscriptPanel();
-
-  if (!panel) {
-    return false;
-  }
-
-  const visibility = panel.getAttribute("visibility");
-
-  const hasSegments =
-    panel.querySelector("ytd-transcript-segment-renderer") !== null;
-
-  return (
-    visibility === "ENGAGEMENT_PANEL_VISIBILITY_EXPANDED" ||
-    hasSegments ||
-    isElementVisible(panel)
-  );
+  return getTranscriptPanel() !== null;
 };
 
 const findTranscriptButtonInSection = (): HTMLButtonElement | null => {
@@ -151,33 +131,20 @@ const clickElement = (element: HTMLElement): void => {
 };
 
 export const openTranscriptPanel = async (): Promise<void> => {
-  console.log("[ClaimSift] Attempting to open transcript panel.");
-
   if (isTranscriptPanelOpen()) {
-    console.log("[ClaimSift] Transcript panel is already open.");
     return;
   }
 
   let transcriptButton = findTranscriptButton();
 
-  console.log("[ClaimSift] Initial transcript button:", transcriptButton);
-
   if (!transcriptButton) {
     const expandButton = findDescriptionExpandButton();
-
-    console.log("[ClaimSift] Description expand button:", expandButton);
-
     if (expandButton) {
       clickElement(expandButton);
       await wait(750);
     }
 
     transcriptButton = findTranscriptButton();
-
-    console.log(
-      "[ClaimSift] Transcript button after expanding description:",
-      transcriptButton,
-    );
   }
 
   if (!transcriptButton) {
@@ -186,20 +153,8 @@ export const openTranscriptPanel = async (): Promise<void> => {
     );
   }
 
-  console.log("[ClaimSift] Clicking transcript button:", {
-    text: transcriptButton.textContent?.replace(/\s+/g, " ").trim(),
-    ariaLabel: transcriptButton.getAttribute("aria-label"),
-    disabled: transcriptButton.disabled,
-  });
-
   clickElement(transcriptButton);
-
   await wait(750);
-
-  console.log("[ClaimSift] Transcript state after click:", {
-    panel: getTranscriptPanel(),
-    panelOpen: isTranscriptPanelOpen(),
-  });
 
   if (!isTranscriptPanelOpen()) {
     throw new Error(
@@ -209,13 +164,13 @@ export const openTranscriptPanel = async (): Promise<void> => {
 };
 
 const panelHasTranscriptContent = (panel: HTMLElement): boolean => {
-  const text = panel.innerText.replace(/\r/g, "").trim();
+  const text = panel.innerText.replaceAll("\r", "").trim();
 
   if (!text) {
     return false;
   }
 
-  const timestamps = text.match(/(?:\d{1,2}:)?\d{1,2}:\d{2}/g);
+  const timestamps = text.match(TIMESTAMP_PATTERN_SOURCE);
 
   return (timestamps?.length ?? 0) > 0;
 };
@@ -224,16 +179,9 @@ export const waitForTranscriptContent = (
   timeoutMs = 15_000,
 ): Promise<HTMLElement> =>
   new Promise((resolve, reject) => {
-    let timeoutId: number;
-
     const findReadyPanel = (): HTMLElement | null => {
       const panel = getTranscriptPanel();
-
-      if (!panel) {
-        return null;
-      }
-
-      return panelHasTranscriptContent(panel) ? panel : null;
+      return panel && panelHasTranscriptContent(panel) ? panel : null;
     };
 
     const existingPanel = findReadyPanel();
@@ -255,28 +203,19 @@ export const waitForTranscriptContent = (
       resolve(panel);
     });
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    });
-
-    timeoutId = window.setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
       observer.disconnect();
-
-      const panel = getTranscriptPanel();
-
-      console.error("[ClaimSift] Transcript panel diagnostic:", {
-        panel,
-        panelOpen: isTranscriptPanelOpen(),
-        panelText: panel?.innerText.slice(0, 1000),
-        panelHtml: panel?.innerHTML.slice(0, 2000),
-      });
 
       reject(
         new Error(`Transcript content did not render within ${timeoutMs}ms.`),
       );
     }, timeoutMs);
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
   });
 
 const parseTraditionalTranscriptRows = (
@@ -285,8 +224,6 @@ const parseTraditionalTranscriptRows = (
   const rows = Array.from(
     panel.querySelectorAll<HTMLElement>("ytd-transcript-segment-renderer"),
   );
-
-  console.log("[ClaimSift] Traditional transcript rows:", rows.length);
 
   return rows
     .map((row): TranscriptSegment | null => {
@@ -319,19 +256,19 @@ const parseTranscriptFromPanelText = (
   panel: HTMLElement,
 ): TranscriptSegment[] => {
   const lines = panel.innerText
-    .replace(/\r/g, "")
+    .replaceAll("\r", "")
     .split("\n")
     .map((line) => line.replace(/\s+/g, " ").trim())
     .filter(Boolean);
 
-  console.log("[ClaimSift] Transcript panel lines:", lines);
-
   const segments: TranscriptSegment[] = [];
 
-  for (let index = 0; index < lines.length; index += 1) {
+  let index = 0;
+  while (index < lines.length) {
     const currentLine = lines[index];
 
     if (!EXACT_TIMESTAMP_PATTERN.test(currentLine)) {
+      index += 1;
       continue;
     }
 
@@ -340,20 +277,14 @@ const parseTranscriptFromPanelText = (
 
     let nextIndex = index + 1;
 
-    if (
-      nextIndex < lines.length &&
-      DURATION_LABEL_PATTERN.test(lines[nextIndex])
-    ) {
-      nextIndex += 1;
-    }
-
     while (
       nextIndex < lines.length &&
       !EXACT_TIMESTAMP_PATTERN.test(lines[nextIndex])
     ) {
-      const candidate = lines[nextIndex];
+      const candidate = removeDurationPrefix(lines[nextIndex]);
 
       if (
+        candidate &&
         candidate.toLowerCase() !== "transcript" &&
         candidate.toLowerCase() !== "search transcript"
       ) {
@@ -373,7 +304,7 @@ const parseTranscriptFromPanelText = (
       });
     }
 
-    index = nextIndex - 1;
+    index = nextIndex;
   }
 
   return segments;
@@ -428,39 +359,22 @@ export const parseTranscriptPanel = (
   }
 
   const textSegments = parseTranscriptFromPanelText(panel);
-
-  console.log(
-    "[ClaimSift] Text-based transcript segments:",
-    textSegments.length,
-  );
-
   return addSegmentDurations(removeDuplicateSegments(textSegments));
 };
 
-const logTranscriptPanelStructure = (panel: HTMLElement): void => {
-  const uniqueTagNames = Array.from(panel.querySelectorAll("*"))
-    .map((element) => element.tagName.toLowerCase())
-    .filter((tagName, index, tagNames) => tagNames.indexOf(tagName) === index);
+export const ensureTranscriptContent = async (): Promise<HTMLElement> => {
+  if (!getTranscriptPanel()) {
+    await openTranscriptPanel();
+  }
 
-  console.log("[ClaimSift] Transcript panel structure:", {
-    targetId: panel.getAttribute("target-id"),
-    visibility: panel.getAttribute("visibility"),
-    uniqueTagNames,
-    textPreview: panel.innerText.slice(0, 1000),
-    htmlPreview: panel.innerHTML.slice(0, 2000),
-  });
+  return waitForTranscriptContent();
 };
 
 export const readTranscriptFromPage = async (): Promise<
   TranscriptSegment[]
 > => {
   try {
-    await openTranscriptPanel();
-
-    const panel = await waitForTranscriptContent();
-
-    logTranscriptPanelStructure(panel);
-
+    const panel = await ensureTranscriptContent();
     const segments = parseTranscriptPanel(panel);
 
     console.log("[ClaimSift] Parsed transcript segments:", segments.length);

@@ -38,3 +38,10 @@ export const calculateTranscriptDurations = (
     };
   });
 };
+
+export const removeDurationPrefix = (text: string): string =>
+  text
+    .replace(/^\d+\s+hours?,?\s*/i, "")
+    .replace(/^\d+\s+minutes?,?\s*/i, "")
+    .replace(/^\d+\s+seconds?\s*/i, "")
+    .trim();

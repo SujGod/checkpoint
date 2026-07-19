@@ -99,7 +99,7 @@ const handleYouTubeNavigation = async (): Promise<void> => {
   }
 
   console.log(
-    "[ClaimSift] ClaimSift remains enabled; processing new video:",
+    "[ClaimSift] ClaimSift remainsok niceenabled; processing new video:",
     currentVideoId,
   );
 
