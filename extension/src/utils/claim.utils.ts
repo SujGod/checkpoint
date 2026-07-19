@@ -81,23 +81,21 @@ export const normalizeClaimTiming = (claim: ExtractedClaim): ExtractedClaim => {
   };
 };
 
-const MINIMUM_DISPLAY_SECONDS = 15;
-
 export const buildVideoManifest = (claims: ExtractedClaim[]): FactCheck[] =>
   claims
-    .map((claim, index): FactCheck => {
-      const startSeconds = Math.max(0, claim.startSeconds);
+    .toSorted((left, right) => left.startSeconds - right.startSeconds)
+    .map((extractedClaim, index) => {
+      const startSeconds = extractedClaim.startSeconds;
 
-      const spokenEndSeconds = Math.max(claim.endSeconds, startSeconds);
+      const endSeconds = extractedClaim.endSeconds;
 
       return {
         id: `claim-${startSeconds}-${index}`,
-        claim: claim.text,
+        claim: extractedClaim.text,
         startSeconds,
-        endSeconds: Math.max(
-          spokenEndSeconds,
-          startSeconds + MINIMUM_DISPLAY_SECONDS,
-        ),
+        endSeconds,
+        verdict: "INCONCLUSIVE",
+        explanation: null,
+        sources: [],
       };
-    })
-    .sort((a, b) => a.startSeconds - b.startSeconds);
+    });

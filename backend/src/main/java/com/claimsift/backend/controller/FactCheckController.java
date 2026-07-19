@@ -16,10 +16,18 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/v1")
 public class FactCheckController {
-    
+
     @PostMapping("/checks")
-    public FactCheckResponse getFactCheck(@Valid @RequestBody FactCheckRequest request) {
-        
-        return new FactCheckResponse(request.getClaim(), Verdict.TRUE, "Test explanation", List.of());
+    public FactCheckResponse getFactCheck(
+        @Valid @RequestBody FactCheckRequest request
+    ) {
+        return FactCheckResponse.builder()
+            .claim(request.getClaim())
+            .startSeconds(0.0)
+            .endSeconds(0.0)
+            .verdict(Verdict.TRUE)
+            .explanation("Test explanation")
+            .sources(List.of())
+            .build();
     }
 }

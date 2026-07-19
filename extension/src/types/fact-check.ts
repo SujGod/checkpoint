@@ -6,21 +6,24 @@ export interface VideoFactCheckManifest {
   factChecks: FactCheck[];
 }
 
+export type FactCheckSource = {
+  title?: string;
+  url?: string;
+  publisher?: string;
+};
+
 export type FactCheck = {
   id: string;
   claim: string;
   startSeconds: number;
   endSeconds: number;
+  verdict: FactCheckVerdict;
+  explanation: string | null;
+  sources: FactCheckSource[];
 };
 
 export interface FactCheckRequest {
   claim: string;
-}
-
-export interface FactCheckSource {
-  title: string;
-  publisher: string;
-  url: string;
 }
 
 export interface FactCheckResponse {
@@ -29,3 +32,8 @@ export interface FactCheckResponse {
   explanation: string;
   sources: FactCheckSource[];
 }
+
+export type ProcessVideoResponse = {
+  videoId: string;
+  factChecks: FactCheck[];
+};

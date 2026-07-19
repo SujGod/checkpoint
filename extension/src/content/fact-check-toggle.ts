@@ -2,10 +2,12 @@ import { isFactCheckEnabled, setFactCheckEnabled } from "../storage/settings";
 import claimSiftIcon from "../assets/claimSiftLogo.png";
 
 const TOGGLE_ID = "claimsift-toggle";
+const PLAYER_CONTROLS_SELECTOR = ".ytp-right-controls";
+const CONTROLS_WAIT_TIMEOUT_MS = 10_000;
 
 interface ToggleCallbacks {
-  onEnable: () => void;
-  onDisable: () => void;
+  onEnable: () => void | Promise<void>;
+  onDisable: () => void | Promise<void>;
 }
 
 const updateToggleAppearance = (
@@ -41,42 +43,127 @@ const createToggleButton = (): HTMLButtonElement => {
   return button;
 };
 
-export const insertFactCheckToggle = async ({
-  onEnable,
-  onDisable,
-}: ToggleCallbacks): Promise<void> => {
-  const controls = document.querySelector<HTMLElement>(".ytp-right-controls");
+const waitForPlayerControls = (
+  timeoutMs = CONTROLS_WAIT_TIMEOUT_MS,
+): Promise<HTMLElement> =>
+  new Promise((resolve, reject) => {
+    const existingControls = document.querySelector<HTMLElement>(
+      PLAYER_CONTROLS_SELECTOR,
+    );
 
-  if (!controls) {
-    return;
-  }
+    if (existingControls) {
+      resolve(existingControls);
+      return;
+    }
 
+    const observer = new MutationObserver(() => {
+      const controls = document.querySelector<HTMLElement>(
+        PLAYER_CONTROLS_SELECTOR,
+      );
+
+      if (!controls) {
+        return;
+      }
+
+      observer.disconnect();
+      window.clearTimeout(timeoutId);
+      resolve(controls);
+    });
+
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+
+    const timeoutId = window.setTimeout(() => {
+      observer.disconnect();
+
+      reject(new Error("YouTube player controls were not found."));
+    }, timeoutMs);
+  });
+
+const removeDetachedToggle = (): void => {
   const existingButton = document.querySelector<HTMLButtonElement>(
     `#${TOGGLE_ID}`,
   );
 
-  if (existingButton) {
-    return;
+  if (existingButton && !existingButton.isConnected) {
+    existingButton.remove();
   }
+};
 
-  const button = createToggleButton();
-  const enabled = await isFactCheckEnabled();
+export const insertFactCheckToggle = async ({
+  onEnable,
+  onDisable,
+}: ToggleCallbacks): Promise<void> => {
+  try {
+    removeDetachedToggle();
 
-  updateToggleAppearance(button, enabled);
+    const controls = await waitForPlayerControls();
 
-  button.addEventListener("click", async () => {
-    const currentValue = await isFactCheckEnabled();
-    const nextValue = !currentValue;
+    const existingButton = document.querySelector<HTMLButtonElement>(
+      `#${TOGGLE_ID}`,
+    );
 
-    await setFactCheckEnabled(nextValue);
-    updateToggleAppearance(button, nextValue);
+    if (existingButton && existingButton.parentElement === controls) {
+      const enabled = await isFactCheckEnabled();
 
-    if (nextValue) {
-      onEnable();
-    } else {
-      onDisable();
+      updateToggleAppearance(existingButton, enabled);
+
+      return;
     }
-  });
 
-  controls.prepend(button);
+    /*
+     * YouTube may replace the player control container during
+     * navigation. Remove a stale button before inserting the
+     * current one into the active controls.
+     */
+    existingButton?.remove();
+
+    const button = createToggleButton();
+
+    const enabled = await isFactCheckEnabled();
+
+    updateToggleAppearance(button, enabled);
+
+    button.addEventListener("click", async () => {
+      /*
+       * Prevent rapid double-clicks from triggering overlapping
+       * storage updates and duplicate processing.
+       */
+      if (button.dataset.processing === "true") {
+        return;
+      }
+
+      button.dataset.processing = "true";
+      button.disabled = true;
+
+      try {
+        const currentValue = await isFactCheckEnabled();
+
+        const nextValue = !currentValue;
+
+        await setFactCheckEnabled(nextValue);
+
+        updateToggleAppearance(button, nextValue);
+
+        if (nextValue) {
+          await onEnable();
+        } else {
+          await onDisable();
+        }
+      } catch (error) {
+        console.error("[ClaimSift] Failed to update toggle:", error);
+      } finally {
+        button.disabled = false;
+        delete button.dataset.processing;
+      }
+    });
+
+    controls.prepend(button);
+
+    console.log("[ClaimSift] Toggle inserted.");
+  } catch (error) {
+    console.error("[ClaimSift] Could not insert toggle:", error);
+  }
 };
