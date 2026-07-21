@@ -1,6 +1,6 @@
 package com.claimsift.backend.service;
 
-import com.claimsift.backend.constants.Constants;
+import com.claimsift.backend.constants.ClaimConstants;
 import com.claimsift.backend.dto.ClaimExtractionRequest;
 import com.claimsift.backend.dto.ClaimExtractionResponse;
 import com.claimsift.backend.dto.ExtractedClaimResponse;
@@ -8,23 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ClaimExtractionService {
-
-    private static final Pattern SENTENCE_SPLIT_PATTERN =
-            Pattern.compile("(?<=[.!?])\\s+");
-
-    private static final Pattern WHITESPACE_PATTERN =
-            Pattern.compile("\\s+");
-
-    private static final Pattern NUMBER_PATTERN =
-            Pattern.compile(".*\\d.*");
-
-    private static final int MINIMUM_WORD_COUNT = 4;
-    private static final int MAXIMUM_WORD_COUNT = 45;
 
     public ClaimExtractionResponse extractClaims(ClaimExtractionRequest request) {
 
@@ -34,7 +21,7 @@ public class ClaimExtractionService {
             return buildResponse(request, List.of());
         }
 
-        String[] sentences = SENTENCE_SPLIT_PATTERN.split(normalizedText);
+        String[] sentences = ClaimConstants.SENTENCE_SPLIT_PATTERN.split(normalizedText);
 
         List<String> candidateClaims = new ArrayList<>();
 
@@ -46,30 +33,17 @@ public class ClaimExtractionService {
             }
         }
 
-        List<ExtractedClaimResponse> claims =
-                assignTimestamps(
-                        candidateClaims,
-                        request.getStartSeconds(),
-                        request.getEndSeconds()
-                );
-
+        List<ExtractedClaimResponse> claims = assignTimestamps(candidateClaims, request.getStartSeconds(), request.getEndSeconds());
         return buildResponse(request, claims);
     }
 
     private String normalizeText(String text) {
-        return WHITESPACE_PATTERN
-                .matcher(text.trim())
-                .replaceAll(" ");
+        return ClaimConstants.WHITESPACE_PATTERN.matcher(text.trim()).replaceAll(" ");
     }
 
     private String cleanSentence(String sentence) {
         String cleaned = sentence.trim();
-
-        cleaned = cleaned.replaceAll(
-                "^(?i)(well|so|okay|ok|like|you know|basically),?\\s+",
-                ""
-        );
-
+        cleaned = cleaned.replaceAll("^(?i)(well|so|okay|ok|like|you know|basically),?\\s+","");
         return cleaned.trim();
     }
 
@@ -85,17 +59,13 @@ public class ClaimExtractionService {
         String lowercase =
                 sentence.toLowerCase(Locale.ROOT);
 
-        if (startsWithAny(
-                lowercase,
-                Constants.OPINION_PREFIXES
-        )) {
+        if (startsWithAny(lowercase,ClaimConstants.OPINION_PREFIXES)) {
             return false;
         }
 
         int wordCount = countWords(sentence);
 
-        if (wordCount < MINIMUM_WORD_COUNT
-                || wordCount > MAXIMUM_WORD_COUNT) {
+        if (wordCount < ClaimConstants.MINIMUM_WORD_COUNT || wordCount > ClaimConstants.MAXIMUM_WORD_COUNT) {
             return false;
         }
 
@@ -103,33 +73,23 @@ public class ClaimExtractionService {
             return false;
         }
 
-        return containsNumber(sentence)
-                || containsFactualSignal(lowercase)
-                || containsProperNoun(sentence);
+        return containsNumber(sentence) || containsFactualSignal(lowercase) || containsProperNoun(sentence);
     }
 
     private boolean looksLikeQuestion(String sentence) {
-        String firstWord = sentence
-                .split("\\s+", 2)[0];
-
-        return Constants.QUESTION_PREFIXES.contains(firstWord)
-                && sentence.endsWith("?");
+        String firstWord = sentence.split("\\s+", 2)[0];
+        return ClaimConstants.QUESTION_PREFIXES.contains(firstWord) && sentence.endsWith("?");
     }
 
     private boolean containsNumber(String sentence) {
-        return NUMBER_PATTERN
-                .matcher(sentence)
-                .matches();
+        return ClaimConstants.NUMBER_PATTERN.matcher(sentence).matches();
     }
 
-    private boolean containsFactualSignal(
-            String sentence) {
-
-        String[] words =
-                sentence.split("\\W+");
+    private boolean containsFactualSignal(String sentence) {
+        String[] words = sentence.split("\\W+");
 
         for (String word : words) {
-            if (Constants.FACTUAL_SIGNAL_WORDS.contains(word)) {
+            if (ClaimConstants.FACTUAL_SIGNAL_WORDS.contains(word)) {
                 return true;
             }
         }
@@ -144,12 +104,9 @@ public class ClaimExtractionService {
              index < words.length;
              index++) {
 
-            String word = words[index]
-                    .replaceAll("[^A-Za-z]", "");
+            String word = words[index].replaceAll("[^A-Za-z]", "");
 
-            if (word.length() > 1
-                    && Character.isUpperCase(
-                            word.charAt(0))) {
+            if (word.length() > 1 && Character.isUpperCase(word.charAt(0))) {
                 return true;
             }
         }
@@ -158,60 +115,32 @@ public class ClaimExtractionService {
     }
 
     private int countWords(String sentence) {
-        return sentence
-                .trim()
-                .split("\\s+")
-                .length;
+        return sentence.trim().split("\\s+").length;
     }
 
-    private boolean startsWithAny(
-            String text,
-            Set<String> prefixes) {
-
-        return prefixes.stream()
-                .anyMatch(text::startsWith);
+    private boolean startsWithAny(String text, Set<String> prefixes) {
+        return prefixes.stream().anyMatch(text::startsWith);
     }
 
-    private List<ExtractedClaimResponse>
-            assignTimestamps(
-                    List<String> claims,
-                    double chunkStart,
-                    double chunkEnd) {
+    private List<ExtractedClaimResponse> assignTimestamps(List<String> claims, double chunkStart, double chunkEnd) {
 
         if (claims.isEmpty()) {
             return List.of();
         }
 
-        double safeEnd = Math.max(
-                chunkEnd,
-                chunkStart
-        );
+        double safeEnd = Math.max(chunkEnd, chunkStart);
+        double duration = safeEnd - chunkStart;
 
-        double duration =
-                safeEnd - chunkStart;
+        double timePerClaim = duration > 0 ? duration / claims.size() : 4.0;
 
-        double timePerClaim = duration > 0
-                ? duration / claims.size()
-                : 4.0;
+        List<ExtractedClaimResponse> responses = new ArrayList<>();
 
-        List<ExtractedClaimResponse> responses =
-                new ArrayList<>();
+        for (int index = 0; index < claims.size(); index++) {
 
-        for (int index = 0;
-             index < claims.size();
-             index++) {
+            double start = chunkStart + index * timePerClaim;
+            double end = index == claims.size() - 1 ? safeEnd : start + timePerClaim;
 
-            double start =
-                    chunkStart
-                            + index * timePerClaim;
-
-            double end = index
-                    == claims.size() - 1
-                    ? safeEnd
-                    : start + timePerClaim;
-
-            responses.add(
-                    ExtractedClaimResponse
+            responses.add(ExtractedClaimResponse
                             .builder()
                             .text(claims.get(index))
                             .startSeconds(start)
@@ -223,9 +152,7 @@ public class ClaimExtractionService {
         return responses;
     }
 
-    private ClaimExtractionResponse buildResponse(
-            ClaimExtractionRequest request,
-            List<ExtractedClaimResponse> claims) {
+    private ClaimExtractionResponse buildResponse(ClaimExtractionRequest request, List<ExtractedClaimResponse> claims) {
 
         return ClaimExtractionResponse
                 .builder()

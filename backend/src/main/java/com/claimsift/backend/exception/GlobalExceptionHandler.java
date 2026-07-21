@@ -1,8 +1,6 @@
 package com.claimsift.backend.exception;
 
 import java.time.Instant;
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,8 +13,7 @@ import com.claimsift.backend.dto.ErrorResponse;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
-            MethodArgumentNotValidException exception) {
+    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException exception) {
 
         String message = exception.getBindingResult()
                 .getFieldErrors()

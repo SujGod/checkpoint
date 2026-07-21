@@ -11,10 +11,7 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry
             .addMapping("/api/**")
-            .allowedOrigins(
-                "https://www.youtube.com",
-                "https://m.youtube.com"
-            )
+            .allowedOrigins("https://www.youtube.com", "https://m.youtube.com")
             .allowedMethods(
                 "GET",
                 "POST",

@@ -40,7 +40,7 @@ export const renderClaimSiftOverlay = (factCheck: FactCheck | null): void => {
 
   root?.render(
     <Provider store={store}>
-      <FactCheckOverlayContainer key={factCheck.id} claim={factCheck.claim} />
+      <FactCheckOverlayContainer key={factCheck.id} factCheck={factCheck} />
     </Provider>,
   );
 };

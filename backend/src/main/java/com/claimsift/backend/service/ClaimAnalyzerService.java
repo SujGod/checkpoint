@@ -10,7 +10,7 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 import com.claimsift.backend.dto.ClaimAnalysis;
-import com.claimsift.backend.constants.Constants;
+import com.claimsift.backend.constants.ClaimConstants;
 
 @Component
 public class ClaimAnalyzerService {
@@ -20,18 +20,10 @@ public class ClaimAnalyzerService {
         boolean hasPredicate = hasPredicate(sentence);
         boolean hasEntity = hasUsefulEntity(sentence);
         boolean hasQuantity = hasQuantity(sentence);
-        boolean containsOpinion = containsLemma(
-                sentence,
-                Constants.OPINION_LEMMAS
-        );
-        boolean containsHedge = containsLemma(
-                sentence,
-                Constants.HEDGE_LEMMAS
-        );
+        boolean containsOpinion = containsLemma(sentence, ClaimConstants.OPINION_LEMMAS);
+        boolean containsHedge = containsLemma(sentence, ClaimConstants.HEDGE_LEMMAS);
 
-        int tokenCount = sentence
-                .get(CoreAnnotations.TokensAnnotation.class)
-                .size();
+        int tokenCount = sentence.get(CoreAnnotations.TokensAnnotation.class).size();
 
         double score = 0.0;
 
@@ -63,10 +55,7 @@ public class ClaimAnalyzerService {
             score -= 0.15;
         }
 
-        boolean accepted =
-                hasSubject
-                && hasPredicate
-                && score >= 0.50;
+        boolean accepted = hasSubject && hasPredicate && score >= 0.50;
 
         String rejectionReason = determineRejectionReason(
                 accepted,
@@ -90,21 +79,16 @@ public class ClaimAnalyzerService {
     }
 
     private boolean hasSubject(CoreMap sentence) {
-        SemanticGraph dependencies = sentence.get(
-                SemanticGraphCoreAnnotations
-                        .EnhancedPlusPlusDependenciesAnnotation.class
-        );
+        SemanticGraph dependencies = sentence.get(SemanticGraphCoreAnnotations.EnhancedPlusPlusDependenciesAnnotation.class);
 
         if (dependencies == null) {
             return false;
         }
 
         for (SemanticGraphEdge edge : dependencies.edgeListSorted()) {
-            String relation = edge
-                    .getRelation()
-                    .toString();
+            String relation = edge.getRelation().toString();
 
-            if (Constants.SUBJECT_RELATIONS.contains(relation)) {
+            if (ClaimConstants.SUBJECT_RELATIONS.contains(relation)) {
                 return true;
             }
         }
@@ -113,33 +97,22 @@ public class ClaimAnalyzerService {
     }
 
     private boolean hasPredicate(CoreMap sentence) {
-        SemanticGraph dependencies = sentence.get(
-                SemanticGraphCoreAnnotations
-                        .EnhancedPlusPlusDependenciesAnnotation.class
-        );
+        SemanticGraph dependencies = sentence.get(SemanticGraphCoreAnnotations.EnhancedPlusPlusDependenciesAnnotation.class);
 
-        if (dependencies == null
-                || dependencies.getFirstRoot() == null) {
+        if (dependencies == null || dependencies.getFirstRoot() == null) {
             return false;
         }
 
-        String rootTag = dependencies
-                .getFirstRoot()
-                .tag();
-
-        return rootTag != null
-                && (rootTag.startsWith("VB")
-                    || rootTag.startsWith("JJ")
-                    || rootTag.startsWith("NN"));
+        String rootTag = dependencies.getFirstRoot().tag();
+        return rootTag != null && (rootTag.startsWith("VB") || rootTag.startsWith("JJ") || rootTag.startsWith("NN"));
     }
 
     private boolean hasUsefulEntity(CoreMap sentence) {
-        for (CoreLabel token : sentence.get(
-                CoreAnnotations.TokensAnnotation.class)) {
+        for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
 
             String ner = token.ner();
 
-            if (Constants.USEFUL_ENTITY_TYPES.contains(ner)) {
+            if (ClaimConstants.USEFUL_ENTITY_TYPES.contains(ner)) {
                 return true;
             }
         }
@@ -166,17 +139,12 @@ public class ClaimAnalyzerService {
         return false;
     }
 
-    private boolean containsLemma(
-            CoreMap sentence,
-            Set<String> lemmas) {
+    private boolean containsLemma(CoreMap sentence, Set<String> lemmas) {
 
-        for (CoreLabel token : sentence.get(
-                CoreAnnotations.TokensAnnotation.class)) {
-
+        for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
             String lemma = token.lemma();
 
-            if (lemma != null
-                    && lemmas.contains(lemma.toLowerCase())) {
+            if (lemma != null && lemmas.contains(lemma.toLowerCase())) {
                 return true;
             }
         }
@@ -184,13 +152,7 @@ public class ClaimAnalyzerService {
         return false;
     }
 
-    private String determineRejectionReason(
-            boolean accepted,
-            boolean hasSubject,
-            boolean hasPredicate,
-            int tokenCount,
-            boolean containsOpinion) {
-
+    private String determineRejectionReason(boolean accepted, boolean hasSubject, boolean hasPredicate, int tokenCount, boolean containsOpinion) {
         if (accepted) {
             return null;
         }

@@ -18,9 +18,8 @@ import jakarta.validation.Valid;
 public class FactCheckController {
 
     @PostMapping("/checks")
-    public FactCheckResponse getFactCheck(
-        @Valid @RequestBody FactCheckRequest request
-    ) {
+    public FactCheckResponse getFactCheck(@Valid @RequestBody FactCheckRequest request) {
+        
         return FactCheckResponse.builder()
             .claim(request.getClaim())
             .startSeconds(0.0)
