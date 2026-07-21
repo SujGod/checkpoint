@@ -7,7 +7,7 @@ import type { FactCheckVerdict } from "../../types/fact-check";
 interface FactCheckOverlayProps {
   claim: string;
   verdict: FactCheckVerdict;
-  explanation: string;
+  explanation: string | null;
   onViewSources?: () => void;
 }
 

@@ -13,14 +13,8 @@ public class NlpConfig {
     @Bean
     public StanfordCoreNLP stanfordCoreNlp() {
         Properties properties = new Properties();
-
-        properties.setProperty(
-                "annotators",
-                "tokenize,ssplit,pos,lemma,ner,depparse"
-        );
-
+        properties.setProperty("annotators", "tokenize,ssplit,pos,lemma,ner,depparse");
         properties.setProperty("tokenize.language", "en");
-
         return new StanfordCoreNLP(properties);
     }
 }

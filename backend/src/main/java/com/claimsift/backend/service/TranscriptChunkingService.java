@@ -15,12 +15,8 @@ public class TranscriptChunkingService {
     private static final double MAX_CHUNK_SECONDS = 30.0;
     private static final int MAX_CHUNK_CHARACTERS = 600;
 
-    public List<TranscriptChunk> chunkTranscript(
-        String videoId,
-        List<TranscriptSegmentRequest> inputSegments
-    ) {
-        List<TranscriptSegmentRequest> segments =
-            normalizeSegments(inputSegments);
+    public List<TranscriptChunk> chunkTranscript(String videoId, List<TranscriptSegmentRequest> inputSegments) {
+        List<TranscriptSegmentRequest> segments = normalizeSegments(inputSegments);
 
         List<TranscriptChunk> chunks = new ArrayList<>();
         List<TranscriptSegmentRequest> currentSegments =

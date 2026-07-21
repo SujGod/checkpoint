@@ -1,18 +1,16 @@
 package com.claimsift.backend.dto;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SourceResponse {
+public class GoogleFactCheckSearchResponse {
 
-    private String publisher;
-    private String title;
-    private String url;
-    private String rating;
+    private List<GoogleClaimResponse> claims;
+    private String nextPageToken;
 }

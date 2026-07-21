@@ -1,3 +1,15 @@
 spring:
   application:
     name: backend
+
+google:
+  fact-check:
+    base-url: https://factchecktools.googleapis.com/v1alpha1
+    api-key: ${GOOGLE_FACT_CHECK_API_KEY}
+    language-code: en
+    page-size: 10
+
+claimsift:
+  fact-check:
+    max-google-queries-per-video: 3
+    minimum-match-similarity: 0.45

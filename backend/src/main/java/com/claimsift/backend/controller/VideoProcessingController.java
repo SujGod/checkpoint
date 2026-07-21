@@ -1,11 +1,15 @@
 package com.claimsift.backend.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.claimsift.backend.config.GoogleFactCheckClient;
+import com.claimsift.backend.dto.GoogleFactCheckSearchResponse;
 import com.claimsift.backend.dto.ProcessVideoRequest;
 import com.claimsift.backend.dto.ProcessVideoResponse;
 import com.claimsift.backend.service.VideoProcessingService;
@@ -19,14 +23,17 @@ import lombok.RequiredArgsConstructor;
 public class VideoProcessingController {
 
     private final VideoProcessingService videoProcessingService;
+    private final GoogleFactCheckClient googleFactCheckClient;
 
     @PostMapping("/process")
-    public ResponseEntity<ProcessVideoResponse> processVideo(
-        @Valid @RequestBody ProcessVideoRequest request
-    ) {
-        ProcessVideoResponse response =
-            videoProcessingService.processVideo(request);
+    public ResponseEntity<ProcessVideoResponse> processVideo(@Valid @RequestBody ProcessVideoRequest request) {
+        ProcessVideoResponse response = videoProcessingService.processVideo(request);
+        return ResponseEntity.ok(response);
+    }
 
+    @GetMapping("/search")
+    public ResponseEntity<GoogleFactCheckSearchResponse> search(@RequestParam String query) {
+        GoogleFactCheckSearchResponse response = googleFactCheckClient.search(query);
         return ResponseEntity.ok(response);
     }
 }

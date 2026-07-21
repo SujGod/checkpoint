@@ -1,10 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-import type {
-  FactCheckRequest,
-  FactCheckResponse,
-  ProcessVideoResponse,
-} from "../types/fact-check";
+import type { ProcessVideoResponse } from "../types/fact-check";
 import type {
   ExtractClaimsResponse,
   ExtractClaimsRequest,
@@ -19,13 +15,6 @@ export const claimsiftApi = createApi({
   }),
 
   endpoints: (builder) => ({
-    checkClaim: builder.mutation<FactCheckResponse, FactCheckRequest>({
-      query: (request: FactCheckRequest) => ({
-        url: "/checks",
-        method: "POST",
-        body: request,
-      }),
-    }),
     extractClaims: builder.mutation<
       ExtractClaimsResponse,
       ExtractClaimsRequest
@@ -46,8 +35,5 @@ export const claimsiftApi = createApi({
   }),
 });
 
-export const {
-  useCheckClaimMutation,
-  useExtractClaimsMutation,
-  useProcessVideoMutation,
-} = claimsiftApi;
+export const { useExtractClaimsMutation, useProcessVideoMutation } =
+  claimsiftApi;
