@@ -8,6 +8,8 @@ import lombok.Data;
 public class GoogleFactCheckProperties {
     private String baseUrl;
     private String apiKey;
+    private String apiKeyHeader;
     private String languageCode;
+    private String claimSearchPath;
     private int pageSize;
 }

@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.claimsift.backend.config.properties.ClaimSiftFactCheckProperties;
-import com.claimsift.backend.dto.ExtractedClaimResponse;
+import com.claimsift.backend.dto.claim.ExtractedClaimResponse;
 
 import lombok.RequiredArgsConstructor;
 

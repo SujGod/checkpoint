@@ -11,7 +11,9 @@ import lombok.Data;
 public class GeminiProperties {
     private String baseUrl;
     private String apiKey;
+    private String apiKeyHeader;
     private String model;
+    private String modelContentPath;
     private int maxClaimsPerChunk;
     private int maxOutputTokens;
 

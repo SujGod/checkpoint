@@ -1,6 +1,6 @@
 package com.claimsift.backend.service;
 
-import com.claimsift.backend.dto.TranscriptSegmentRequest;
+import com.claimsift.backend.dto.processing.TranscriptSegmentRequest;
 import com.claimsift.backend.model.TranscriptChunk;
 import org.springframework.stereotype.Service;
 

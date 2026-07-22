@@ -5,10 +5,10 @@ import java.util.Comparator;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
-import com.claimsift.backend.dto.ExtractedClaimResponse;
-import com.claimsift.backend.dto.FactCheckResponse;
-import com.claimsift.backend.dto.ProcessVideoRequest;
-import com.claimsift.backend.dto.ProcessVideoResponse;
+import com.claimsift.backend.dto.claim.ExtractedClaimResponse;
+import com.claimsift.backend.dto.claim.FactCheckResponse;
+import com.claimsift.backend.dto.processing.ProcessVideoRequest;
+import com.claimsift.backend.dto.processing.ProcessVideoResponse;
 import com.claimsift.backend.model.TranscriptChunk;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class VideoProcessingService {
     private final ClaimPrioritizationService claimPrioritizationService;
     private final FactCheckService factCheckService;
 
-    
+
 
     public ProcessVideoResponse processVideo(ProcessVideoRequest request) {
 

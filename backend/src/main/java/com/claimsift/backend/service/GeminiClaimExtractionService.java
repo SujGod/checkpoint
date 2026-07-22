@@ -14,15 +14,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.claimsift.backend.client.GeminiClient;
 import com.claimsift.backend.config.GeminiGenerationConfig;
 import com.claimsift.backend.config.properties.GeminiProperties;
-import com.claimsift.backend.dto.ExtractedClaimResponse;
-import com.claimsift.backend.dto.TranscriptSegmentRequest;
 import com.claimsift.backend.dto.claim.AiClaimExtractionResponse;
 import com.claimsift.backend.dto.claim.AiExtractedClaimResponse;
+import com.claimsift.backend.dto.claim.ExtractedClaimResponse;
 import com.claimsift.backend.dto.gemini.GeminiCandidate;
 import com.claimsift.backend.dto.gemini.GeminiContent;
 import com.claimsift.backend.dto.gemini.GeminiGenerateContentRequest;
 import com.claimsift.backend.dto.gemini.GeminiGenerateContentResponse;
 import com.claimsift.backend.dto.gemini.GeminiPart;
+import com.claimsift.backend.dto.processing.TranscriptSegmentRequest;
 import com.claimsift.backend.model.TranscriptChunk;
 
 import lombok.RequiredArgsConstructor;

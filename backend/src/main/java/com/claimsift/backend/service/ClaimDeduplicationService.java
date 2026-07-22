@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import com.claimsift.backend.dto.ExtractedClaimResponse;
+import com.claimsift.backend.dto.claim.ExtractedClaimResponse;
 
 import lombok.RequiredArgsConstructor;
 

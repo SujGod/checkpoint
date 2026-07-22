@@ -1,4 +1,4 @@
-package com.claimsift.backend.dto;
+package com.claimsift.backend.dto.error;
 
 import java.time.Instant;
 import lombok.AllArgsConstructor;

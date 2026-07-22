@@ -5,7 +5,9 @@ spring:
 gemini:
   base-url: https://generativelanguage.googleapis.com/v1beta
   api-key: ${GEMINI_API_KEY}
+  api-key-header: x-goog-api-key
   model: gemini-3.1-flash-lite
+  model-content-path: /models/{model}:generateContent
   max-claims-per-chunk: 3
   max-output-tokens: 1200
 
@@ -13,8 +15,10 @@ google:
   fact-check:
     base-url: https://factchecktools.googleapis.com/v1alpha1
     api-key: ${GOOGLE_FACT_CHECK_API_KEY}
+    api-key-header: x-goog-api-key
     language-code: en
     page-size: 10
+    claim-search-path: /claims:search
 
 claimsift:
   fact-check:

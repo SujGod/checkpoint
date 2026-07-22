@@ -1,4 +1,4 @@
-package com.claimsift.backend.dto;
+package com.claimsift.backend.dto.google;
 
 import java.util.List;
 

@@ -1,6 +1,8 @@
-package com.claimsift.backend.dto;
+package com.claimsift.backend.dto.processing;
 
 import java.util.List;
+
+import com.claimsift.backend.dto.claim.FactCheckResponse;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -5,8 +5,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.claimsift.backend.dto.ClaimExtractionRequest;
-import com.claimsift.backend.dto.ClaimExtractionResponse;
+import com.claimsift.backend.dto.claim.ClaimExtractionRequest;
+import com.claimsift.backend.dto.claim.ClaimExtractionResponse;
 import com.claimsift.backend.service.ClaimExtractionService;
 
 import jakarta.validation.Valid;

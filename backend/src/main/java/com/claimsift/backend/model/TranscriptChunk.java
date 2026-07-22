@@ -1,7 +1,8 @@
 package com.claimsift.backend.model;
 
 import java.util.List;
-import com.claimsift.backend.dto.TranscriptSegmentRequest;
+
+import com.claimsift.backend.dto.processing.TranscriptSegmentRequest;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

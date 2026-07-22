@@ -1,9 +1,10 @@
 package com.claimsift.backend.service;
 
 import com.claimsift.backend.constants.ClaimConstants;
-import com.claimsift.backend.dto.ClaimExtractionRequest;
-import com.claimsift.backend.dto.ClaimExtractionResponse;
-import com.claimsift.backend.dto.ExtractedClaimResponse;
+import com.claimsift.backend.dto.claim.ClaimExtractionRequest;
+import com.claimsift.backend.dto.claim.ClaimExtractionResponse;
+import com.claimsift.backend.dto.claim.ExtractedClaimResponse;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

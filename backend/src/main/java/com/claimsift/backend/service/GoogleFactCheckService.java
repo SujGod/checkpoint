@@ -11,10 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
 import com.claimsift.backend.client.GoogleFactCheckClient;
-import com.claimsift.backend.dto.GoogleClaimResponse;
-import com.claimsift.backend.dto.GoogleClaimReviewResponse;
-import com.claimsift.backend.dto.GoogleFactCheckSearchResponse;
-import com.claimsift.backend.dto.SourceResponse;
+import com.claimsift.backend.dto.claim.SourceResponse;
+import com.claimsift.backend.dto.google.GoogleClaimResponse;
+import com.claimsift.backend.dto.google.GoogleClaimReviewResponse;
+import com.claimsift.backend.dto.google.GoogleFactCheckSearchResponse;
 import com.claimsift.backend.mapper.FactCheckVerdictMapper;
 import com.claimsift.backend.model.FactCheckEvidence;
 import com.claimsift.backend.model.GoogleFactCheckLookupResult;
