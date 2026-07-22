@@ -1,4 +1,4 @@
-package com.claimsift.backend.config;
+package com.claimsift.backend.client;
 
 import java.util.List;
 

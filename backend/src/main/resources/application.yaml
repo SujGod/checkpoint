@@ -2,6 +2,13 @@ spring:
   application:
     name: backend
 
+gemini:
+  base-url: https://generativelanguage.googleapis.com/v1beta
+  api-key: ${GEMINI_API_KEY}
+  model: gemini-3.1-flash-lite
+  max-claims-per-chunk: 3
+  max-output-tokens: 1200
+
 google:
   fact-check:
     base-url: https://factchecktools.googleapis.com/v1alpha1
@@ -11,5 +18,6 @@ google:
 
 claimsift:
   fact-check:
-    max-google-queries-per-video: 3
-    minimum-match-similarity: 0.45
+    max-claims-per-video: 5
+    max-google-queries-per-video: 5
+    minimum-match-similarity: 0.25

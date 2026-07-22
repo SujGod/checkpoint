@@ -191,6 +191,7 @@ public class TranscriptChunkingService {
             .text(text)
             .startSeconds(first.getStartSeconds())
             .endSeconds(endSeconds)
+            .segments(new ArrayList<>(segments))
             .build();
     }
 

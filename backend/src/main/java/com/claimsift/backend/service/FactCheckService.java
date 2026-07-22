@@ -38,7 +38,7 @@ public class FactCheckService {
             Cache<String, CachedFactCheckResult>
                     factCheckResultCache,
             @Value(
-                "${claimsift.fact-check.max-google-queries-per-video:15}"
+                "${claimsift.fact-check.max-google-queries-per-video:5}"
             )
             int maxGoogleQueriesPerVideo) {
 

@@ -1,5 +1,8 @@
 package com.claimsift.backend.model;
 
+import java.util.List;
+import com.claimsift.backend.dto.TranscriptSegmentRequest;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,9 +13,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TranscriptChunk {
-    String id;
-    String videoId;
-    String text;
-    double startSeconds;
-    double endSeconds;
+    private String id;
+    private String videoId;
+    private String text;
+    private double startSeconds;
+    private double endSeconds;
+    private List<TranscriptSegmentRequest> segments;
 }
