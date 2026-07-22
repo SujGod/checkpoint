@@ -9,8 +9,8 @@ import edu.stanford.nlp.util.CoreMap;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 
-import com.claimsift.backend.dto.ClaimAnalysis;
 import com.claimsift.backend.constants.ClaimConstants;
+import com.claimsift.backend.dto.claim.ClaimAnalysis;
 
 @Component
 public class ClaimAnalyzerService {

@@ -1,9 +1,7 @@
 package com.claimsift.backend.service;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -12,11 +10,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
-import com.claimsift.backend.dto.SourceResponse;
-import com.claimsift.backend.config.GoogleFactCheckClient;
-import com.claimsift.backend.dto.GoogleClaimResponse;
-import com.claimsift.backend.dto.GoogleClaimReviewResponse;
-import com.claimsift.backend.dto.GoogleFactCheckSearchResponse;
+import com.claimsift.backend.client.GoogleFactCheckClient;
+import com.claimsift.backend.dto.claim.SourceResponse;
+import com.claimsift.backend.dto.google.GoogleClaimResponse;
+import com.claimsift.backend.dto.google.GoogleClaimReviewResponse;
+import com.claimsift.backend.dto.google.GoogleFactCheckSearchResponse;
+import com.claimsift.backend.mapper.FactCheckVerdictMapper;
 import com.claimsift.backend.model.FactCheckEvidence;
 import com.claimsift.backend.model.GoogleFactCheckLookupResult;
 import com.claimsift.backend.model.Verdict;
@@ -27,12 +26,18 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GoogleFactCheckService {
 
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(
+                    GoogleFactCheckService.class
+            );
+
     private final GoogleFactCheckClient googleFactCheckClient;
     private final ClaimNormalizationService claimNormalizationService;
-    private static final Logger LOGGER =
-        LoggerFactory.getLogger(GoogleFactCheckService.class);
+    private final FactCheckVerdictMapper factCheckVerdictMapper;
 
-    @Value("${claimsift.fact-check.minimum-match-similarity:0.45}")
+    @Value(
+        "${claimsift.fact-check.minimum-match-similarity:0.45}"
+    )
     private double minimumMatchSimilarity;
 
     public GoogleFactCheckLookupResult search(
@@ -49,20 +54,28 @@ public class GoogleFactCheckService {
                     response
             );
         } catch (RestClientException exception) {
+            LOGGER.error(
+                    "[ClaimSift] Google Fact Check request failed "
+                            + "for claim: {}",
+                    extractedClaimText,
+                    exception
+            );
+
             return GoogleFactCheckLookupResult.error();
         }
     }
 
     private GoogleFactCheckLookupResult findBestMatch(
-        String extractedClaimText,
-        GoogleFactCheckSearchResponse response) {
+            String extractedClaimText,
+            GoogleFactCheckSearchResponse response) {
 
         if (response == null
                 || response.getClaims() == null
                 || response.getClaims().isEmpty()) {
 
             LOGGER.info(
-                    "[ClaimSift] No Google candidates returned for claim: {}",
+                    "[ClaimSift] No Google candidates returned "
+                            + "for claim: {}",
                     extractedClaimText
             );
 
@@ -86,8 +99,8 @@ public class GoogleFactCheckService {
                     );
 
             LOGGER.info(
-                    "[ClaimSift] Similarity {} between extracted claim '{}' "
-                            + "and Google claim '{}'",
+                    "[ClaimSift] Similarity {} between "
+                            + "extracted claim '{}' and Google claim '{}'",
                     similarity,
                     extractedClaimText,
                     candidate.getText()
@@ -110,7 +123,10 @@ public class GoogleFactCheckService {
         }
 
         FactCheckEvidence evidence =
-                buildEvidence(bestClaim);
+                buildEvidence(
+                        extractedClaimText,
+                        bestClaim
+                );
 
         return GoogleFactCheckLookupResult.match(
                 evidence
@@ -122,35 +138,72 @@ public class GoogleFactCheckService {
 
         return claim != null
                 && claim.getText() != null
+                && !claim.getText().isBlank()
                 && claim.getClaimReview() != null
                 && !claim.getClaimReview().isEmpty();
     }
 
     private FactCheckEvidence buildEvidence(
+            String extractedClaimText,
             GoogleClaimResponse matchedClaim) {
 
         List<GoogleClaimReviewResponse> reviews =
                 matchedClaim.getClaimReview();
 
         GoogleClaimReviewResponse primaryReview =
-                reviews.get(0);
+                selectPrimaryReview(
+                        reviews
+                );
 
         List<SourceResponse> sources =
                 reviews.stream()
                         .map(this::mapSource)
                         .toList();
 
+        Verdict verdict =
+                factCheckVerdictMapper.mapVerdict(
+                        extractedClaimText,
+                        primaryReview.getTextualRating()
+                );
+
+        LOGGER.info(
+                "[ClaimSift] Mapped published rating '{}' "
+                        + "to verdict {} for extracted claim '{}'.",
+                primaryReview.getTextualRating(),
+                verdict,
+                extractedClaimText
+        );
+
         return FactCheckEvidence.builder()
-                .verdict(
-                        mapVerdict(
-                                primaryReview.getTextualRating()
-                        )
-                )
+                .verdict(verdict)
                 .explanation(
-                        buildExplanation(primaryReview)
+                        buildExplanation(
+                                primaryReview,
+                                verdict
+                        )
                 )
                 .sources(sources)
                 .build();
+    }
+
+    private GoogleClaimReviewResponse selectPrimaryReview(
+            List<GoogleClaimReviewResponse> reviews) {
+
+        /*
+         * Prefer a review that contains a textual rating.
+         * Otherwise, fall back to the first review.
+         */
+        return reviews.stream()
+                .filter(review ->
+                        review != null
+                                && review.getTextualRating() != null
+                                && !review.getTextualRating()
+                                        .isBlank()
+                )
+                .findFirst()
+                .orElse(
+                        reviews.get(0)
+                );
     }
 
     private SourceResponse mapSource(
@@ -171,83 +224,9 @@ public class GoogleFactCheckService {
                 .build();
     }
 
-    private Verdict mapVerdict(
-            String textualRating) {
-
-        if (textualRating == null
-                || textualRating.isBlank()) {
-
-            return Verdict.INCONCLUSIVE;
-        }
-
-        String rating = textualRating
-                .toLowerCase(Locale.ROOT);
-
-        /*
-         * Check mixed/uncertain ratings first.
-         */
-        if (containsAny(
-                rating,
-                "mixture",
-                "mixed",
-                "half true",
-                "partly true",
-                "partially true",
-                "unproven",
-                "unverified",
-                "missing context",
-                "needs context",
-                "out of context",
-                "satire"
-        )) {
-            return Verdict.INCONCLUSIVE;
-        }
-
-        /*
-         * Check negative ratings before positive ratings.
-         */
-        if (containsAny(
-                rating,
-                "false",
-                "incorrect",
-                "inaccurate",
-                "fake",
-                "misleading",
-                "pants on fire",
-                "not true",
-                "unsupported"
-        )) {
-            return Verdict.FALSE;
-        }
-
-        if (containsAny(
-                rating,
-                "true",
-                "correct",
-                "accurate",
-                "verified"
-        )) {
-            return Verdict.TRUE;
-        }
-
-        return Verdict.INCONCLUSIVE;
-    }
-
-    private boolean containsAny(
-            String text,
-            String... values) {
-
-        for (String value : values) {
-            if (text.contains(value)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private String buildExplanation(
-            GoogleClaimReviewResponse review) {
+            GoogleClaimReviewResponse review,
+            Verdict verdict) {
 
         String publisher =
                 "A fact-checking publisher";
@@ -264,8 +243,17 @@ public class GoogleFactCheckService {
 
         String rating =
                 review.getTextualRating() == null
+                        || review.getTextualRating().isBlank()
                         ? "an unspecified rating"
                         : review.getTextualRating();
+
+        if (verdict == Verdict.INCONCLUSIVE) {
+            return publisher
+                    + " reviewed a matching published claim, "
+                    + "but its rating could not be mapped confidently: \""
+                    + rating
+                    + "\".";
+        }
 
         return publisher
                 + " reviewed a matching published claim and rated it \""
@@ -294,14 +282,22 @@ public class GoogleFactCheckService {
         }
 
         Set<String> intersection =
-                new HashSet<>(firstTokens);
+                new HashSet<>(
+                        firstTokens
+                );
 
-        intersection.retainAll(secondTokens);
+        intersection.retainAll(
+                secondTokens
+        );
 
         Set<String> union =
-                new HashSet<>(firstTokens);
+                new HashSet<>(
+                        firstTokens
+                );
 
-        union.addAll(secondTokens);
+        union.addAll(
+                secondTokens
+        );
 
         return (double) intersection.size()
                 / union.size();

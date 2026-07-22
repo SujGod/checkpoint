@@ -1,4 +1,4 @@
-package com.claimsift.backend.dto;
+package com.claimsift.backend.dto.google;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

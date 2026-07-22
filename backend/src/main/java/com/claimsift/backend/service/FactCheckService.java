@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.claimsift.backend.dto.ExtractedClaimResponse;
-import com.claimsift.backend.dto.FactCheckResponse;
+import com.claimsift.backend.dto.claim.ExtractedClaimResponse;
+import com.claimsift.backend.dto.claim.FactCheckResponse;
 import com.claimsift.backend.model.CachedFactCheckResult;
 import com.claimsift.backend.model.FactCheckEvidence;
 import com.claimsift.backend.model
@@ -38,7 +38,7 @@ public class FactCheckService {
             Cache<String, CachedFactCheckResult>
                     factCheckResultCache,
             @Value(
-                "${claimsift.fact-check.max-google-queries-per-video:15}"
+                "${claimsift.fact-check.max-google-queries-per-video:5}"
             )
             int maxGoogleQueriesPerVideo) {
 

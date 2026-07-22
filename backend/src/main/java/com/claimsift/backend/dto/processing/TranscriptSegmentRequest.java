@@ -1,4 +1,4 @@
-package com.claimsift.backend.dto;
+package com.claimsift.backend.dto.processing;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;

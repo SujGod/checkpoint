@@ -2,7 +2,7 @@ package com.claimsift.backend.model;
 
 import java.util.List;
 
-import com.claimsift.backend.dto.SourceResponse;
+import com.claimsift.backend.dto.claim.SourceResponse;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

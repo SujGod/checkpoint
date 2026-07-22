@@ -1,15 +1,13 @@
 package com.claimsift.backend.service;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
-import com.claimsift.backend.dto.ExtractedClaimResponse;
+import com.claimsift.backend.dto.claim.ExtractedClaimResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,38 +15,69 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ClaimDeduplicationService {
 
-    private final ClaimNormalizationService claimNormalizationService;
+    private final ClaimNormalizationService
+            claimNormalizationService;
 
-    public List<ExtractedClaimResponse> deduplicate(List<ExtractedClaimResponse> claims) {
-        if (CollectionUtils.isEmpty(claims)) {
+    public List<ExtractedClaimResponse> deduplicate(
+            List<ExtractedClaimResponse> claims) {
+
+        if (claims == null || claims.isEmpty()) {
             return List.of();
         }
 
-        List<ExtractedClaimResponse> sortedClaims =
-                claims.stream()
-                        .filter(this::isValidClaim)
-                        .sorted(Comparator.comparingDouble(ExtractedClaimResponse::getStartSeconds))
-                        .toList();
+        Map<String, ExtractedClaimResponse> uniqueClaims =
+                new LinkedHashMap<>();
 
-        Set<String> seenClaims = new HashSet<>();
-        List<ExtractedClaimResponse> uniqueClaims = new ArrayList<>();
+        for (ExtractedClaimResponse claim : claims) {
+            if (!isValidClaim(claim)) {
+                continue;
+            }
 
-        for (ExtractedClaimResponse claim : sortedClaims) {
-            String normalizedClaim = claimNormalizationService.normalize(claim.getText());
+            String normalizedClaim =
+                    claimNormalizationService.normalize(
+                            claim.getText()
+                    );
 
             if (normalizedClaim.isBlank()) {
                 continue;
             }
 
-            if (seenClaims.add(normalizedClaim)) {
-                uniqueClaims.add(claim);
-            }
+            uniqueClaims.merge(
+                    normalizedClaim,
+                    claim,
+                    this::selectBetterClaim
+            );
         }
 
-        return uniqueClaims;
+        return uniqueClaims.values()
+                .stream()
+                .sorted(
+                        Comparator.comparingDouble(
+                                ExtractedClaimResponse::
+                                        getStartSeconds
+                        )
+                )
+                .toList();
     }
 
-    private boolean isValidClaim(ExtractedClaimResponse claim) {
-        return claim != null && claim.getText() != null && !claim.getText().isBlank();
+    private ExtractedClaimResponse selectBetterClaim(
+            ExtractedClaimResponse first,
+            ExtractedClaimResponse second) {
+
+        if (second.getImportanceScore()
+                > first.getImportanceScore()) {
+
+            return second;
+        }
+
+        return first;
+    }
+
+    private boolean isValidClaim(
+            ExtractedClaimResponse claim) {
+
+        return claim != null
+                && claim.getText() != null
+                && !claim.getText().isBlank();
     }
 }

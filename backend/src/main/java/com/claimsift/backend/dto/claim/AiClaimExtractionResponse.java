@@ -1,4 +1,4 @@
-package com.claimsift.backend.dto;
+package com.claimsift.backend.dto.claim;
 
 import java.util.List;
 
@@ -8,10 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class ProcessVideoResponse {
-    private String videoId;
-    private List<FactCheckResponse> factChecks;
+public class AiClaimExtractionResponse {
+    private List<AiExtractedClaimResponse> claims;
 }

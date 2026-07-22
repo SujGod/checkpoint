@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.claimsift.backend.config.GoogleFactCheckClient;
-import com.claimsift.backend.dto.GoogleFactCheckSearchResponse;
-import com.claimsift.backend.dto.ProcessVideoRequest;
-import com.claimsift.backend.dto.ProcessVideoResponse;
+import com.claimsift.backend.client.GoogleFactCheckClient;
+import com.claimsift.backend.dto.google.GoogleFactCheckSearchResponse;
+import com.claimsift.backend.dto.processing.ProcessVideoRequest;
+import com.claimsift.backend.dto.processing.ProcessVideoResponse;
 import com.claimsift.backend.service.VideoProcessingService;
 
 import jakarta.validation.Valid;

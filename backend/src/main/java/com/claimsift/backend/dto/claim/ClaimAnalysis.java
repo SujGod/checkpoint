@@ -1,4 +1,4 @@
-package com.claimsift.backend.dto;
+package com.claimsift.backend.dto.claim;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
