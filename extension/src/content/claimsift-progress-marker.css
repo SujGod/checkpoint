@@ -1,36 +1,44 @@
-#claimsift-progress-markers {
-  position: absolute;
-  inset: 0;
-
-  width: 100%;
-  height: 100%;
-
-  pointer-events: none;
-  z-index: 50;
-}
-
 .claimsift-progress-marker {
   position: absolute;
-  top: 3px;
+  top: 6px;
 
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   width: 36px;
   height: 36px;
 
   pointer-events: none;
 
-  transform: translate(-50%, -50%);
-  transform-origin: center;
-
+  transform: translate(-50%, -55%);
   z-index: 51;
 }
 
+.claimsift-progress-marker::before {
+  content: "";
+
+  position: absolute;
+
+  width: 18px;
+  height: 18px;
+
+  background-color: white;
+  border-radius: 50%;
+
+  transform: translateY(-2px);
+
+  z-index: 0;
+}
+
 .claimsift-progress-marker-logo {
+  position: relative;
+  z-index: 1;
+
   display: block;
 
-  width: 100%;
-  height: 100%;
+  width: 36px;
+  height: 36px;
 
   object-fit: contain;
 
