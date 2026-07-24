@@ -16,7 +16,6 @@ import lombok.NoArgsConstructor;
 public class TranscriptChunk {
     private String id;
     private String videoId;
-    private String text;
     private double startSeconds;
     private double endSeconds;
     private List<TranscriptSegmentRequest> segments;

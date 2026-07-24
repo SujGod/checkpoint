@@ -25,15 +25,12 @@ public class VideoProcessingService {
     private final ClaimPrioritizationService claimPrioritizationService;
     private final FactCheckService factCheckService;
 
-
-
     public ProcessVideoResponse processVideo(ProcessVideoRequest request) {
 
-        List<TranscriptChunk> chunks =
-                transcriptChunkingService.chunkTranscript(
-                        request.getVideoId(),
-                        request.getSegments()
-                );
+        List<TranscriptChunk> chunks = transcriptChunkingService.chunkTranscript(
+                request.getVideoId(),
+                request.getSegments()
+        );
 
         log.info(
                 "[ClaimSift] Video {} created {} transcript chunks.",
@@ -43,34 +40,13 @@ public class VideoProcessingService {
 
         List<ExtractedClaimResponse> extractedClaims = extractClaims(chunks);
         List<ExtractedClaimResponse> uniqueClaims = claimDeduplicationService.deduplicate(extractedClaims);
+        List<ExtractedClaimResponse> selectedClaims = claimPrioritizationService.selectTopClaims(uniqueClaims);
 
-        List<ExtractedClaimResponse> selectedClaims =
-                claimPrioritizationService.selectTopClaims(
-                        uniqueClaims
-                );
+        List<FactCheckResponse> factChecks = factCheckService.checkClaims(request.getVideoId(), selectedClaims);
 
-        logPipelineSummary(
-                request.getVideoId(),
-                extractedClaims,
-                uniqueClaims,
-                selectedClaims
-        );
-
-        List<FactCheckResponse> factChecks =
-                factCheckService.checkClaims(
-                        request.getVideoId(),
-                        selectedClaims
-                );
-
-        List<FactCheckResponse> sortedFactChecks =
-                factChecks.stream()
-                        .sorted(
-                                Comparator.comparingDouble(
-                                        FactCheckResponse::
-                                                getStartSeconds
-                                )
-                        )
-                        .toList();
+        List<FactCheckResponse> sortedFactChecks = factChecks.stream()
+                .sorted(Comparator.comparingDouble(FactCheckResponse::getStartSeconds))
+                .toList();
 
         return ProcessVideoResponse.builder()
                 .videoId(request.getVideoId())
@@ -91,44 +67,9 @@ public class VideoProcessingService {
             );
 
             List<ExtractedClaimResponse> chunkClaims = geminiClaimExtractionService.extractClaims(chunk);
-
             extractedClaims.addAll(chunkClaims);
         }
 
         return extractedClaims;
-    }
-
-    private void logPipelineSummary(
-            String videoId,
-            List<ExtractedClaimResponse> extractedClaims,
-            List<ExtractedClaimResponse> uniqueClaims,
-            List<ExtractedClaimResponse> selectedClaims) {
-
-        log.info(
-                "[ClaimSift] Video {}: extracted={}, unique={}, selected={}.",
-                videoId,
-                extractedClaims.size(),
-                uniqueClaims.size(),
-                selectedClaims.size()
-        );
-
-        for (int index = 0;
-                index < selectedClaims.size();
-                index++) {
-
-            ExtractedClaimResponse claim =
-                    selectedClaims.get(index);
-
-            log.info(
-                    "[ClaimSift] Selected claim {}/{}: "
-                            + "score={}, time={}-{}, text={}",
-                    index + 1,
-                    selectedClaims.size(),
-                    claim.getImportanceScore(),
-                    claim.getStartSeconds(),
-                    claim.getEndSeconds(),
-                    claim.getText()
-            );
-        }
     }
 }

@@ -1,4 +1,4 @@
-package com.claimsift.backend.dto;
+package com.claimsift.backend.dto.claim;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

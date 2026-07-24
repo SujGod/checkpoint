@@ -8,6 +8,7 @@ import {
   waitForYouTubeVideo,
   getCurrentYouTubeVideoId,
 } from "./youtube-video-controller";
+import { renderClaimSiftProgressMarkers, removeClaimSiftProgressMarkers, resetClaimSiftProgressMarkers } from "./claimsift-progress-marker";
 
 let enabled = false;
 let manifest: FactCheck[] = [];
@@ -61,6 +62,10 @@ export const enableClaimSift = async (): Promise<void> => {
     () => enabled && getCurrentYouTubeVideoId() === videoId,
   );
 
+  renderClaimSiftProgressMarkers(
+    manifest,
+  );
+
   handleTimeUpdate();
 };
 
@@ -73,6 +78,7 @@ export const disableClaimSift = (): void => {
   manifest = [];
 
   removeClaimSiftOverlay();
+  removeClaimSiftProgressMarkers();
 };
 
 export const resetClaimSift = async (): Promise<void> => {
@@ -83,6 +89,7 @@ export const resetClaimSift = async (): Promise<void> => {
   activeFactCheck = null;
 
   removeClaimSiftOverlay();
+  resetClaimSiftProgressMarkers();
 
   if (enabled) {
     await enableClaimSift();

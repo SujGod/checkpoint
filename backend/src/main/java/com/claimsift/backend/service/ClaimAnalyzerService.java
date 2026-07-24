@@ -6,13 +6,17 @@ import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations;
 import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.util.CoreMap;
+
+import java.util.Objects;
 import java.util.Set;
-import org.springframework.stereotype.Component;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
 
 import com.claimsift.backend.constants.ClaimConstants;
 import com.claimsift.backend.dto.claim.ClaimAnalysis;
 
-@Component
+@Service
 public class ClaimAnalyzerService {
 
     public ClaimAnalysis analyze(CoreMap sentence) {
@@ -24,7 +28,6 @@ public class ClaimAnalyzerService {
         boolean containsHedge = containsLemma(sentence, ClaimConstants.HEDGE_LEMMAS);
 
         int tokenCount = sentence.get(CoreAnnotations.TokensAnnotation.class).size();
-
         double score = 0.0;
 
         if (hasSubject) {
@@ -56,14 +59,7 @@ public class ClaimAnalyzerService {
         }
 
         boolean accepted = hasSubject && hasPredicate && score >= 0.50;
-
-        String rejectionReason = determineRejectionReason(
-                accepted,
-                hasSubject,
-                hasPredicate,
-                tokenCount,
-                containsOpinion
-        );
+        String rejectionReason = !accepted ? determineRejectionReason(hasSubject, hasPredicate, tokenCount, containsOpinion) : null;
 
         return new ClaimAnalysis(
                 accepted,
@@ -81,7 +77,7 @@ public class ClaimAnalyzerService {
     private boolean hasSubject(CoreMap sentence) {
         SemanticGraph dependencies = sentence.get(SemanticGraphCoreAnnotations.EnhancedPlusPlusDependenciesAnnotation.class);
 
-        if (dependencies == null) {
+        if (Objects.isNull(dependencies)) {
             return false;
         }
 
@@ -104,7 +100,7 @@ public class ClaimAnalyzerService {
         }
 
         String rootTag = dependencies.getFirstRoot().tag();
-        return rootTag != null && (rootTag.startsWith("VB") || rootTag.startsWith("JJ") || rootTag.startsWith("NN"));
+        return Objects.nonNull(rootTag) && (rootTag.startsWith("VB") || rootTag.startsWith("JJ") || rootTag.startsWith("NN"));
     }
 
     private boolean hasUsefulEntity(CoreMap sentence) {
@@ -121,9 +117,7 @@ public class ClaimAnalyzerService {
     }
 
     private boolean hasQuantity(CoreMap sentence) {
-        for (CoreLabel token : sentence.get(
-                CoreAnnotations.TokensAnnotation.class)) {
-
+        for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
             String ner = token.ner();
 
             if ("NUMBER".equals(ner)
@@ -144,7 +138,7 @@ public class ClaimAnalyzerService {
         for (CoreLabel token : sentence.get(CoreAnnotations.TokensAnnotation.class)) {
             String lemma = token.lemma();
 
-            if (lemma != null && lemmas.contains(lemma.toLowerCase())) {
+            if (Objects.nonNull(lemma) && lemmas.contains(lemma.toLowerCase())) {
                 return true;
             }
         }
@@ -152,11 +146,7 @@ public class ClaimAnalyzerService {
         return false;
     }
 
-    private String determineRejectionReason(boolean accepted, boolean hasSubject, boolean hasPredicate, int tokenCount, boolean containsOpinion) {
-        if (accepted) {
-            return null;
-        }
-
+    private String determineRejectionReason(boolean hasSubject, boolean hasPredicate, int tokenCount, boolean containsOpinion) {
         if (tokenCount < 4) {
             return "TOO_SHORT";
         }

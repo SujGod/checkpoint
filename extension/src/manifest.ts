@@ -5,7 +5,7 @@ const manifest: ManifestV3Export = {
   name: "ClaimSift",
   short_name: "ClaimSift",
   description: "Overlay timestamped fact checks over YouTube videos.",
-  version: "0.1.1",
+  version: "0.1.2",
 
   permissions: ["storage"],
 
