@@ -6,11 +6,15 @@ import {
 } from "./claimsift-controller";
 import { insertFactCheckToggle } from "./fact-check-toggle";
 import { getCurrentYouTubeVideoId } from "./youtube-video-controller";
+import { rerenderClaimSiftProgressMarkers } from "./claimsift-progress-marker";
+import "./claimsift-progress-marker.css";
 import "./fact-check-toggle.css";
 
 console.log("[ClaimSift] Content script loaded.");
 
 const NAVIGATION_SETTLE_DELAY_MS = 500;
+const NAVIGATION_DEBOUNCE_DELAY_MS = 150;
+const PLAYER_LAYOUT_SETTLE_DELAY_MS = 100;
 
 let lastVideoId: string | null = null;
 let navigationTimeoutId: number | undefined;
@@ -99,7 +103,7 @@ const handleYouTubeNavigation = async (): Promise<void> => {
   }
 
   console.log(
-    "[ClaimSift] ClaimSift remainsok niceenabled; processing new video:",
+    "[ClaimSift] ClaimSift remains enabled; processing new video:",
     currentVideoId,
   );
 
@@ -129,10 +133,23 @@ const scheduleNavigationHandling = (): void => {
     void handleYouTubeNavigation().catch((error: unknown) => {
       console.error("[ClaimSift] Navigation handling failed:", error);
     });
-  }, 150);
+  }, NAVIGATION_DEBOUNCE_DELAY_MS);
+};
+
+const handlePlayerLayoutChange =
+  (): void => {
+  /*
+    * YouTube can recreate the progress-bar DOM when entering or
+    * exiting fullscreen. Wait briefly, then append the markers to
+    * the current progress bar.
+    */
+  window.setTimeout(() => {
+    rerenderClaimSiftProgressMarkers();
+  }, PLAYER_LAYOUT_SETTLE_DELAY_MS);
 };
 
 document.addEventListener("yt-navigate-finish", scheduleNavigationHandling);
+document.addEventListener("fullscreenchange", handlePlayerLayoutChange);
 
 void initialize().catch((error: unknown) => {
   console.error("[ClaimSift] Initialization failed:", error);

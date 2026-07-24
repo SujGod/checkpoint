@@ -4,8 +4,11 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import com.claimsift.backend.dto.claim.ExtractedClaimResponse;
 
@@ -15,69 +18,45 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ClaimDeduplicationService {
 
-    private final ClaimNormalizationService
-            claimNormalizationService;
+    private final ClaimNormalizationService claimNormalizationService;
 
-    public List<ExtractedClaimResponse> deduplicate(
-            List<ExtractedClaimResponse> claims) {
+    public List<ExtractedClaimResponse> deduplicate(List<ExtractedClaimResponse> claims) {
 
-        if (claims == null || claims.isEmpty()) {
+        if (CollectionUtils.isEmpty(claims)) {
             return List.of();
         }
 
-        Map<String, ExtractedClaimResponse> uniqueClaims =
-                new LinkedHashMap<>();
+        Map<String, ExtractedClaimResponse> uniqueClaims = new LinkedHashMap<>();
 
         for (ExtractedClaimResponse claim : claims) {
             if (!isValidClaim(claim)) {
                 continue;
             }
 
-            String normalizedClaim =
-                    claimNormalizationService.normalize(
-                            claim.getText()
-                    );
+            String normalizedClaim = claimNormalizationService.normalize(claim.getText());
 
             if (normalizedClaim.isBlank()) {
                 continue;
             }
 
-            uniqueClaims.merge(
-                    normalizedClaim,
-                    claim,
-                    this::selectBetterClaim
-            );
+            uniqueClaims.merge(normalizedClaim, claim, this::selectBetterClaim);
         }
 
         return uniqueClaims.values()
-                .stream()
-                .sorted(
-                        Comparator.comparingDouble(
-                                ExtractedClaimResponse::
-                                        getStartSeconds
-                        )
-                )
-                .toList();
+            .stream()
+            .sorted(Comparator.comparingDouble(ExtractedClaimResponse::getStartSeconds))
+            .toList();
     }
 
-    private ExtractedClaimResponse selectBetterClaim(
-            ExtractedClaimResponse first,
-            ExtractedClaimResponse second) {
-
-        if (second.getImportanceScore()
-                > first.getImportanceScore()) {
-
+    private ExtractedClaimResponse selectBetterClaim(ExtractedClaimResponse first, ExtractedClaimResponse second) {
+        if (second.getImportanceScore() > first.getImportanceScore()) {
             return second;
         }
 
         return first;
     }
 
-    private boolean isValidClaim(
-            ExtractedClaimResponse claim) {
-
-        return claim != null
-                && claim.getText() != null
-                && !claim.getText().isBlank();
+    private boolean isValidClaim(ExtractedClaimResponse claim) {
+        return Objects.nonNull(claim) && StringUtils.isNotBlank(claim.getText());
     }
 }

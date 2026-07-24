@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -49,7 +51,7 @@ public class ClaimExtractionService {
     }
 
     private boolean isPotentialFactualClaim(String sentence) {
-        if (sentence.isBlank()) {
+        if (StringUtils.isBlank(sentence)) {
             return false;
         }
 
@@ -57,8 +59,7 @@ public class ClaimExtractionService {
             return false;
         }
 
-        String lowercase =
-                sentence.toLowerCase(Locale.ROOT);
+        String lowercase = sentence.toLowerCase(Locale.ROOT);
 
         if (startsWithAny(lowercase,ClaimConstants.OPINION_PREFIXES)) {
             return false;
@@ -124,7 +125,6 @@ public class ClaimExtractionService {
     }
 
     private List<ExtractedClaimResponse> assignTimestamps(List<String> claims, double chunkStart, double chunkEnd) {
-
         if (claims.isEmpty()) {
             return List.of();
         }

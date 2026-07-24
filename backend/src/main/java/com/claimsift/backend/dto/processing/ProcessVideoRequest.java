@@ -20,5 +20,5 @@ public class ProcessVideoRequest {
 
     @Valid
     @NotEmpty
-    private List< TranscriptSegmentRequest> segments;
+    private List<TranscriptSegmentRequest> segments;
 }

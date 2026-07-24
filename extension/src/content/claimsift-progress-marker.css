@@ -1,0 +1,50 @@
+.claimsift-progress-marker {
+  position: absolute;
+  top: 6px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+
+  pointer-events: none;
+
+  transform: translate(-50%, -55%);
+  z-index: 51;
+}
+
+.claimsift-progress-marker::before {
+  content: "";
+
+  position: absolute;
+
+  width: 18px;
+  height: 18px;
+
+  background-color: white;
+  border-radius: 50%;
+
+  transform: translateY(-2px);
+
+  z-index: 0;
+}
+
+.claimsift-progress-marker-logo {
+  position: relative;
+  z-index: 1;
+
+  display: block;
+
+  width: 36px;
+  height: 36px;
+
+  object-fit: contain;
+
+  opacity: 1;
+  filter: none;
+
+  pointer-events: none;
+  user-select: none;
+}

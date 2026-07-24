@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import com.claimsift.backend.constants.ClaimConstants;
@@ -13,12 +14,11 @@ import com.claimsift.backend.constants.ClaimConstants;
 public class ClaimNormalizationService {
 
     public String normalize(String text) {
-        if (text == null || text.isBlank()) {
-            return "";
+        if (StringUtils.isBlank(text)) {
+            return StringUtils.EMPTY;
         }
 
-        return Arrays.stream(
-                        text.toLowerCase(Locale.ROOT)
+        return Arrays.stream(text.toLowerCase(Locale.ROOT)
                                 .replaceAll("[^a-z0-9\\s]", " ")
                                 .trim()
                                 .split("\\s+")

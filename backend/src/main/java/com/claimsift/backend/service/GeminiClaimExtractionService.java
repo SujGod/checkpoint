@@ -3,10 +3,12 @@ package com.claimsift.backend.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestClientException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -88,61 +90,37 @@ public class GeminiClaimExtractionService {
     private final ObjectMapper objectMapper;
 
     public List<ExtractedClaimResponse> extractClaims(TranscriptChunk chunk) {
-        log.info("Goes into extract claims in GeminiClaimExtraction service: ");
-        if (chunk == null || chunk.getText() == null || chunk.getText().isEmpty()) {
-            log.info("Chunk is null or empty or has no text: {}", chunk);
+        if (Objects.isNull(chunk) || CollectionUtils.isEmpty(chunk.getSegments())) {
+            log.info("Chunk is null or has no segments: {}", chunk);
             return List.of();
         }
 
         
         log.info(
                 "[ClaimSift] Sending chunk {} to Gemini: "
-                        + "videoId={}, start={}, end={}, characters={}",
+                        + "videoId={}, start={}, end={}",
                 chunk.getId(),
                 chunk.getVideoId(),
                 chunk.getStartSeconds(),
-                chunk.getEndSeconds(),
-                chunk.getText().length()
+                chunk.getEndSeconds()
         );
         GeminiGenerateContentRequest request = buildRequest(chunk);
 
         try {
             GeminiGenerateContentResponse response = geminiClient.generateContent(request);
             String responseJson = extractResponseText(response);
-
-            AiClaimExtractionResponse extractionResponse = objectMapper.readValue(
-                            responseJson,
-                            AiClaimExtractionResponse.class
-                    );
+            AiClaimExtractionResponse extractionResponse = objectMapper.readValue(responseJson, AiClaimExtractionResponse.class);
 
             log.info("Response :: {} and chunk :: {}", extractionResponse, chunk);
             return validateAndMapClaims(extractionResponse, chunk);
-
         } catch (RestClientException exception) {
-            log.error(
-                    "[ClaimSift] Gemini request failed for chunk {}.",
-                    chunk.getId(),
-                    exception
-            );
-
+            log.error("[ClaimSift] Gemini request failed for chunk {}.", chunk.getId(), exception);
             return List.of();
-
         } catch (JsonProcessingException exception) {
-            log.error(
-                    "[ClaimSift] Could not parse Gemini response for chunk {}.",
-                    chunk.getId(),
-                    exception
-            );
-
+            log.error("[ClaimSift] Could not parse Gemini response for chunk {}.", chunk.getId(), exception);
             return List.of();
-
         } catch (IllegalStateException exception) {
-            log.error(
-                    "[ClaimSift] Invalid Gemini response for chunk {}.",
-                    chunk.getId(),
-                    exception
-            );
-
+            log.error("[ClaimSift] Invalid Gemini response for chunk {}.", chunk.getId(), exception);
             return List.of();
         }
     }
@@ -150,51 +128,37 @@ public class GeminiClaimExtractionService {
     private GeminiGenerateContentRequest buildRequest(TranscriptChunk chunk) {
 
         return GeminiGenerateContentRequest.builder()
-                .systemInstruction(
-                        GeminiContent.builder()
-                                .parts(
-                                        List.of(
-                                                GeminiPart.builder()
-                                                        .text(
-                                                                SYSTEM_PROMPT
-                                                        )
-                                                        .build()
-                                        )
-                                )
-                                .build()
-                )
-                .contents(
-                        List.of(
-                                GeminiContent.builder()
-                                        .role("user")
-                                        .parts(
-                                                List.of(
-                                                        GeminiPart.builder()
-                                                                .text(
-                                                                        buildUserPrompt(
-                                                                                chunk
-                                                                        )
-                                                                )
-                                                                .build()
-                                                )
-                                        )
-                                        .build()
-                        )
-                )
-                .generationConfig(
-                        GeminiGenerationConfig.builder()
-                                .temperature(0.1)
-                                .maxOutputTokens(
-                                        properties.getMaxOutputTokens()
-                                )
-                                .responseMimeType(
-                                        "application/json"
-                                )
-                                .responseJsonSchema(
-                                        buildResponseSchema()
-                                )
-                                .build()
-                )
+            .systemInstruction(buildSystemInstruction())
+            .contents(List.of(buildUserContent(chunk)))
+            .generationConfig(buildGenerationConfig())
+            .build();
+    }
+
+    private GeminiContent buildSystemInstruction() {
+        return GeminiContent.builder()
+                .parts(List.of(buildTextPart(SYSTEM_PROMPT)))
+                .build();
+    }
+    
+    private GeminiContent buildUserContent(TranscriptChunk chunk) {
+        return GeminiContent.builder()
+                .role("user")
+                .parts(List.of(buildTextPart(buildUserPrompt(chunk))))
+                .build();
+    }
+
+    private GeminiPart buildTextPart(String text) {
+        return GeminiPart.builder()
+                .text(text)
+                .build();
+    }
+
+    private GeminiGenerationConfig buildGenerationConfig() {
+        return GeminiGenerationConfig.builder()
+                .temperature(0.1)
+                .maxOutputTokens(properties.getMaxOutputTokens())
+                .responseMimeType("application/json")
+                .responseJsonSchema(buildResponseSchema())
                 .build();
     }
 
@@ -217,16 +181,8 @@ public class GeminiClaimExtractionService {
         prompt.append("\n\nTranscript:\n");
 
         for (TranscriptSegmentRequest segment : chunk.getSegments()) {
-
             double segmentEnd = segment.getStartSeconds() + segment.getDurationSeconds();
-
-            prompt.append(
-                    "[%.2f-%.2f] %s%n".formatted(
-                            segment.getStartSeconds(),
-                            segmentEnd,
-                            segment.getText()
-                    )
-            );
+            prompt.append("[%.2f-%.2f] %s%n".formatted(segment.getStartSeconds(), segmentEnd, segment.getText()));
         }
 
         return prompt.toString();
@@ -234,131 +190,107 @@ public class GeminiClaimExtractionService {
 
     private Map<String, Object> buildResponseSchema() {
         Map<String, Object> claimSchema = Map.of(
-                "type",
-                "object",
-                "properties",
+            "type",
+            "object",
+            "properties",
+            Map.of("text",
                 Map.of(
-                        "text",
-                        Map.of(
-                                "type",
-                                "string",
-                                "description",
-                                "Concise standalone factual claim"
-                        ),
-                        "startSeconds",
-                        Map.of(
-                                "type",
-                                "number",
-                                "description",
-                                "Earliest supporting transcript timestamp"
-                        ),
-                        "endSeconds",
-                        Map.of(
-                                "type",
-                                "number",
-                                "description",
-                                "Latest supporting transcript timestamp"
-                        ),
-                        "importanceScore",
-                        Map.of(
-                                "type",
-                                "number",
-                                "minimum",
-                                0.0,
-                                "maximum",
-                                1.0
-                        )
+                    "type",
+                    "string",
+                    "description",
+                    "Concise standalone factual claim"
                 ),
-                "required",
-                List.of(
-                        "text",
-                        "startSeconds",
-                        "endSeconds",
-                        "importanceScore"
+                "startSeconds",
+                Map.of(
+                    "type",
+                    "number",
+                    "description",
+                    "Earliest supporting transcript timestamp"
                 ),
-                "additionalProperties",
-                false
+                "endSeconds",
+                Map.of(
+                    "type",
+                    "number",
+                    "description",
+                    "Latest supporting transcript timestamp"
+                ),
+                "importanceScore",
+                Map.of(
+                    "type",
+                    "number",
+                    "minimum",
+                    0.0,
+                    "maximum",
+                    1.0
+                )
+            ),
+            "required",
+            List.of(
+                "text",
+                "startSeconds",
+                "endSeconds",
+                "importanceScore"
+            ),
+            "additionalProperties",
+            false
         );
 
         return Map.of(
-                "type",
-                "object",
-                "properties",
+            "type",
+            "object",
+            "properties",
+            Map.of(
+                "claims",
                 Map.of(
-                        "claims",
-                        Map.of(
-                                "type",
-                                "array",
-                                "maxItems",
-                                properties.getMaxClaimsPerChunk(),
-                                "items",
-                                claimSchema
-                        )
-                ),
-                "required",
-                List.of("claims"),
-                "additionalProperties",
-                false
+                        "type",
+                        "array",
+                        "maxItems",
+                        properties.getMaxClaimsPerChunk(),
+                        "items",
+                        claimSchema
+                )
+            ),
+            "required",
+            List.of("claims"),
+            "additionalProperties",
+            false
         );
     }
 
     private String extractResponseText(GeminiGenerateContentResponse response) {
 
-        if (response == null
-                || response.getCandidates() == null
-                || response.getCandidates().isEmpty()) {
-
-            throw new IllegalStateException(
-                    "Gemini returned no candidates."
-            );
+        if (CollectionUtils.isEmpty(response.getCandidates())) {
+            throw new IllegalStateException("Gemini returned no candidates.");
         }
 
-        GeminiCandidate firstCandidate =
-                response.getCandidates().get(0);
+        GeminiCandidate firstCandidate = response.getCandidates().get(0);
 
-        if (firstCandidate.getContent() == null
-                || firstCandidate.getContent().getParts() == null
-                || firstCandidate.getContent()
-                        .getParts()
-                        .isEmpty()) {
-
-            throw new IllegalStateException(
-                    "Gemini candidate contained no content."
-            );
+        if (ObjectUtils.isEmpty(firstCandidate.getContent())) {
+            throw new IllegalStateException("Gemini candidate contained no content.");
         }
 
-        String text =
-                firstCandidate.getContent()
-                        .getParts()
-                        .get(0)
-                        .getText();
+        String text = firstCandidate.getContent()
+            .getParts()
+            .get(0)
+            .getText();
 
-        if (text == null || text.isBlank()) {
-            throw new IllegalStateException(
-                    "Gemini response text was blank."
-            );
+        if (StringUtils.isBlank(text)) {
+            throw new IllegalStateException("Gemini response text was blank.");
         }
 
         log.info("Gemini Response Text: {}", text);
         return text;
     }
 
-    private List<ExtractedClaimResponse> validateAndMapClaims(
-            AiClaimExtractionResponse response,
-            TranscriptChunk chunk) {
+    private List<ExtractedClaimResponse> validateAndMapClaims(AiClaimExtractionResponse response, TranscriptChunk chunk) {
 
-        if (response == null
-                || response.getClaims() == null
-                || response.getClaims().isEmpty()) {
-
+        if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getClaims())) {
             return List.of();
         }
 
-        List<ExtractedClaimResponse> validClaims =
-                new ArrayList<>();
+        List<ExtractedClaimResponse> validClaims = new ArrayList<>();
 
-        for (AiExtractedClaimResponse aiClaim :
-                response.getClaims()) {
+        for (AiExtractedClaimResponse aiClaim : response.getClaims()) {
 
             if (!isValidClaim(aiClaim, chunk)) {
                 log.debug(
@@ -372,73 +304,46 @@ public class GeminiClaimExtractionService {
                 continue;
             }
 
-            validClaims.add(
-                    ExtractedClaimResponse.builder()
-                            .text(
-                                    aiClaim.getText().trim()
-                            )
-                            .startSeconds(
-                                    aiClaim.getStartSeconds()
-                            )
-                            .endSeconds(
-                                    aiClaim.getEndSeconds()
-                            )
-                            .importanceScore(
-                                    aiClaim.getImportanceScore()
-                            )
-                            .build()
+            validClaims.add(ExtractedClaimResponse.builder()
+                .text(aiClaim.getText().trim())
+                .startSeconds(aiClaim.getStartSeconds())
+                .endSeconds(aiClaim.getEndSeconds())
+                .importanceScore(aiClaim.getImportanceScore())
+                .build()
             );
         }
 
         log.info("Valid claims found: {}", validClaims);
 
         return validClaims.stream()
-                .limit(
-                        properties.getMaxClaimsPerChunk()
-                )
-                .toList();
+            .limit(properties.getMaxClaimsPerChunk())
+            .toList();
     }
 
-    private boolean isValidClaim(
-            AiExtractedClaimResponse claim,
-            TranscriptChunk chunk) {
+    private boolean isValidClaim(AiExtractedClaimResponse claim, TranscriptChunk chunk) {
 
-        if (claim == null
-                || claim.getText() == null
-                || claim.getText().isBlank()) {
-
+        if (Objects.isNull(claim) || StringUtils.isBlank(claim.getText())) {
             return false;
         }
 
-        int wordCount =
-                claim.getText()
-                        .trim()
-                        .split("\\s+")
-                        .length;
+        if (claim.getStartSeconds() < chunk.getStartSeconds()) {
+            return false;
+        }
 
+        if (claim.getEndSeconds() > chunk.getEndSeconds()) {
+            return false;
+        }
+
+        if (claim.getEndSeconds() <= claim.getStartSeconds()) {
+            return false;
+        }
+
+        int wordCount = claim.getText().trim().split("\\s+").length;
+        // need to see if word count should be moved to constant and 5-50 words per claim is good
         if (wordCount < 4 || wordCount > 50) {
             return false;
         }
 
-        if (claim.getStartSeconds()
-                < chunk.getStartSeconds()) {
-
-            return false;
-        }
-
-        if (claim.getEndSeconds()
-                > chunk.getEndSeconds()) {
-
-            return false;
-        }
-
-        if (claim.getEndSeconds()
-                <= claim.getStartSeconds()) {
-
-            return false;
-        }
-
-        return claim.getImportanceScore() >= 0.0
-                && claim.getImportanceScore() <= 1.0;
+        return claim.getImportanceScore() >= 0.0 && claim.getImportanceScore() <= 1.0;
     }
 }
