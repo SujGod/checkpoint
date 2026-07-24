@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import com.claimsift.backend.config.properties.GoogleFactCheckProperties;
-import com.claimsift.backend.dto.google.GoogleClaimResponse;
 import com.claimsift.backend.dto.google.GoogleFactCheckSearchResponse;
 
 import lombok.extern.slf4j.Slf4j;

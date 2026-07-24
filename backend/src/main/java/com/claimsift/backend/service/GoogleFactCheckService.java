@@ -6,8 +6,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -43,13 +41,7 @@ public class GoogleFactCheckService {
             GoogleFactCheckSearchResponse response = googleFactCheckClient.search(extractedClaimText);
             return findBestMatch(extractedClaimText, response);
         } catch (RestClientException exception) {
-            log.error(
-                    "[ClaimSift] Google Fact Check request failed "
-                            + "for claim: {}",
-                    extractedClaimText,
-                    exception
-            );
-
+            log.error("[ClaimSift] Google Fact Check request failed for claim: {}", extractedClaimText, exception);
             return GoogleFactCheckLookupResult.error();
         }
     }
@@ -71,13 +63,7 @@ public class GoogleFactCheckService {
 
             double similarity = calculateSimilarity(extractedClaimText, candidate.getText());
 
-            log.info(
-                    "[ClaimSift] Similarity {} between "
-                            + "extracted claim '{}' and Google claim '{}'",
-                    similarity,
-                    extractedClaimText,
-                    candidate.getText()
-            );
+            log.info("[ClaimSift] Similarity {} between extracted claim '{}' and Google claim '{}'", similarity, extractedClaimText, candidate.getText());
 
             if (Objects.isNull(bestClaim) || similarity > bestSimilarity) {
 

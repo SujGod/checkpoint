@@ -10,8 +10,6 @@ import { rerenderClaimSiftProgressMarkers } from "./claimsift-progress-marker";
 import "./claimsift-progress-marker.css";
 import "./fact-check-toggle.css";
 
-
-
 console.log("[ClaimSift] Content script loaded.");
 
 const NAVIGATION_SETTLE_DELAY_MS = 500;
